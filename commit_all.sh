@@ -1,52 +1,54 @@
 #!/bin/bash
 
-# 切换到项目根目录（脚本所在目录，避免写死路径）
+# Switch to the project root directory (directory where this script is located)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT" || exit 1
 
-echo "==== 当前工作目录：$(pwd) ===="
+echo "==== Current working directory: $(pwd) ===="
 
-# 1. 查看变更文件
-echo -e "\n[1] 检测代码变更"
+# 1. Check changed files
+echo -e "\n[1] Checking repository status"
 git status
 
-# 2. 概念图自动同步
-echo -e "\n[2] 检测 agent 目录层级是否变化"
+# 2. Auto-refresh concept diagram
+echo -e "\n[2] Checking for agent README changes"
 
 if git status --porcelain -- agents/ | grep -qE '\bagents/[^/]+/[^/]+/README\.md$'; then
-    echo "  检测到 agent README 变动，重新生成概念图..."
+    echo "  Agent README changes detected. Regenerating concept diagram..."
     if python3 "$PROJECT_ROOT/diagrams/generate_concept.py"; then
-        echo "  ✅ 概念图已刷新 (diagrams/concept.svg)"
+        echo "  ✓ Concept diagram refreshed (diagrams/concept.svg)"
     else
-        echo "  ⚠️  概念图生成失败，请检查 generate_concept.py" >&2
+        echo "  WARNING: Failed to generate concept diagram. Please check generate_concept.py" >&2
     fi
 else
-    echo "  无 agent 层级变化，跳过。"
+    echo "  No agent README changes detected. Skipping."
 fi
 
-# 3. 全部加入暂存区
-echo -e "\n[3] 添加所有文件到暂存"
+# 3. Stage all files
+echo -e "\n[3] Staging all changes"
 git add .
 
-# 4. 读取提交备注
-read -p "请输入本次commit描述: " commit_msg
+# 4. Read commit message
+read -p "Enter commit message: " commit_msg
 
-# 5. 提交
-echo -e "\n[4] 提交代码"
+# 5. Commit
+echo -e "\n[4] Creating commit"
 git commit -m "$commit_msg"
 
 if [ $? -ne 0 ]; then
-    echo "❌ Commit失败"
+    echo "ERROR: Commit failed"
     exit 1
 fi
 
-# 6. 推送
-echo -e "\n[5] 推送到远程仓库"
-git push
+# 6. Push current branch
+CURRENT_BRANCH=$(git branch --show-current)
+
+echo -e "\n[5] Pushing branch '$CURRENT_BRANCH' to remote"
+git push origin "$CURRENT_BRANCH"
 
 if [ $? -eq 0 ]; then
-    echo "✅ Commit并Push成功"
+    echo "SUCCESS: Commit and push completed"
 else
-    echo "❌ Push失败"
+    echo "ERROR: Push failed"
     exit 1
 fi
