@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 990" width="860" height="990">
+  <style>
+    text { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif; }
+  </style>
+  <defs>
+    <filter id="shadow-soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#00000014"/></filter>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#5a5a5a"/>
+    </marker>
+  </defs>
+  <rect width="860" height="990" fill="#f8f6f3"/>
+  <text x="430" y="46" text-anchor="middle" fill="#1a1a1a" font-size="21" font-weight="700">PM Agent · Spec Pipeline</text>
+  <text x="40" y="120" fill="#6a6a6a" font-size="11" font-weight="700" letter-spacing="0.08em">INPUT</text>
+  <text x="40" y="388" fill="#6a6a6a" font-size="11" font-weight="700" letter-spacing="0.08em">DECOMPOSE</text>
+  <text x="40" y="815" fill="#6a6a6a" font-size="11" font-weight="700" letter-spacing="0.08em">OUTPUT</text>
+  <line x1="430" y1="132" x2="430" y2="164" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="224" x2="430" y2="252" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="312" x2="430" y2="340" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="400" x2="430" y2="428" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="488" x2="430" y2="516" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="576" x2="430" y2="604" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="430" y1="664" x2="430" y2="702" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="150" cy="88" r="11" fill="#4a4a4a"/>
+  <path d="M 131,119 Q 131,95 150,95 Q 169,95 169,119 Z" fill="#4a4a4a"/>
+  <text x="150" y="137" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="600">Me</text>
+  <line x1="178" y1="103" x2="256" y2="103" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="219" y="97" text-anchor="middle" fill="#6a6a6a" font-size="10">raw ideas</text>
+  <rect x="260" y="76" width="340" height="54" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <circle cx="290" cy="100" r="7" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 287,109 L 293,109 M 288,112 L 292,112" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="316" y="99" fill="#1a1a1a" font-size="15" font-weight="600">Input</text>
+  <text x="316" y="117" fill="#6a6a6a" font-size="11">raw ideas · notes · PM decisions</text>
+  <rect x="260" y="168" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <circle cx="290" cy="195" r="10" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="290" cy="195" r="4.5" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="290" cy="195" r="1.6" fill="#5a5a5a"/>
+  <text x="316" y="191" fill="#1a1a1a" font-size="15" font-weight="600">Extract core goal</text>
+  <text x="316" y="209" fill="#6a6a6a" font-size="11">the one product goal to hit</text>
+  <rect x="260" y="256" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <path d="M 291,274 A 9,9 0 1 1 281,282" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 291,274 l 5,-2 l -1,5" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="316" y="279" fill="#1a1a1a" font-size="15" font-weight="600">Define MVP loop</text>
+  <text x="316" y="297" fill="#6a6a6a" font-size="11">the minimal usable loop</text>
+  <rect x="260" y="344" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <rect x="280" y="362" width="20" height="5" rx="2" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="280" y="369" width="14" height="5" rx="2" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="280" y="376" width="9" height="5" rx="2" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="316" y="367" fill="#1a1a1a" font-size="15" font-weight="600">Classify P0/P1/Later</text>
+  <text x="316" y="385" fill="#6a6a6a" font-size="11">Decided · Assumption · Open</text>
+  <rect x="260" y="432" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <path d="M 282,448 L 293,448 L 299,454 L 299,470 L 282,470 Z" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 293,448 L 293,454 L 299,454" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 286,460 L 295,460 M 286,465 L 295,465" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="316" y="455" fill="#1a1a1a" font-size="15" font-weight="600">Generate spec bundle</text>
+  <text x="316" y="473" fill="#6a6a6a" font-size="11">three core files</text>
+  <rect x="260" y="520" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <rect x="280" y="537" width="20" height="20" rx="4" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 285,547 L 289,552 L 296,542" stroke="#5a5a5a" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="316" y="543" fill="#1a1a1a" font-size="15" font-weight="600">Run spec checklist</text>
+  <text x="316" y="561" fill="#6a6a6a" font-size="11">validate before build</text>
+  <rect x="260" y="608" width="340" height="54" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#shadow-soft)"/>
+  <circle cx="290" cy="635" r="10" stroke="#5a5a5a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="290" y="640" text-anchor="middle" fill="#5a5a5a" font-size="14" font-weight="700">?</text>
+  <text x="316" y="631" fill="#1a1a1a" font-size="15" font-weight="600">Surface blocking Qs</text>
+  <text x="316" y="649" fill="#6a6a6a" font-size="11">ask only what blocks</text>
+  <circle cx="710" cy="620" r="11" fill="#4a4a4a"/>
+  <path d="M 691,651 Q 691,627 710,627 Q 729,627 729,651 Z" fill="#4a4a4a"/>
+  <text x="710" y="669" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="600">You</text>
+  <line x1="604" y1="627" x2="684" y2="627" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="642" y="621" text-anchor="middle" fill="#6a6a6a" font-size="10">asks</text>
+  <line x1="684" y1="647" x2="604" y2="647" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="642" y="661" text-anchor="middle" fill="#6a6a6a" font-size="10">decides</text>
+  <rect x="180" y="706" width="500" height="240" rx="12" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="198" y="732" fill="#1a1a1a" font-size="13" font-weight="700">Spec Bundle</text>
+  <rect x="202" y="748" width="456" height="28" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.2"/>
+  <path d="M 212,751 L 223,751 L 229,757 L 229,773 L 212,773 Z" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 223,751 L 223,757 L 229,757" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 216,763 L 225,763 M 216,768 L 225,768" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="238" y="767" fill="#1a1a1a" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif">00_project_brief.md</text>
+  <rect x="202" y="785" width="456" height="28" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.2"/>
+  <path d="M 212,788 L 223,788 L 229,794 L 229,810 L 212,810 Z" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 223,788 L 223,794 L 229,794" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 216,800 L 225,800 M 216,805 L 225,805" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="238" y="804" fill="#1a1a1a" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif">01_mvp_spec.md</text>
+  <rect x="202" y="822" width="456" height="28" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.2"/>
+  <path d="M 212,825 L 223,825 L 229,831 L 229,847 L 212,847 Z" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 223,825 L 223,831 L 229,831" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 216,837 L 225,837 M 216,842 L 225,842" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="238" y="841" fill="#1a1a1a" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif">02_tasks_acceptance.md</text>
+  <rect x="202" y="859" width="456" height="28" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <path d="M 212,862 L 223,862 L 229,868 L 229,884 L 212,884 Z" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 223,862 L 223,868 L 229,868" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 216,874 L 225,874 M 216,879 L 225,879" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="238" y="878" fill="#1a1a1a" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif">03_open_questions.md</text>
+  <text x="644" y="878" text-anchor="end" fill="#6a6a6a" font-size="10">optional</text>
+  <rect x="202" y="896" width="456" height="28" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <path d="M 212,899 L 223,899 L 229,905 L 229,921 L 212,921 Z" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 223,899 L 223,905 L 229,905" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 216,911 L 225,911 M 216,916 L 225,916" stroke="#4a4a4a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="238" y="915" fill="#1a1a1a" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif">04_change_log.md</text>
+  <text x="644" y="915" text-anchor="end" fill="#6a6a6a" font-size="10">optional</text>
+</svg>

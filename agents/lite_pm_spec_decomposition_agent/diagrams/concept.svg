@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 623" width="1060" height="623">
+  <style>text { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif; }</style>
+  <defs>
+    <marker id="a-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#3f6896"/></marker>
+    <marker id="a-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4f8a76"/></marker>
+  </defs>
+  <rect width="1060" height="623" fill="#f8f6f3"/>
+  <text x="530" y="46" text-anchor="middle" fill="#1a1a1a" font-size="24" font-weight="700">agent_worlds</text>
+  <text x="530" y="72" text-anchor="middle" fill="#6a6a6a" font-size="14">Two worlds of agents that serve me</text>
+  <rect x="50" y="130" width="340" height="253" rx="14" fill="#efe9e1" stroke="#d8d0c6" stroke-width="1.5"/>
+  <text x="72" y="164" fill="#1a1a1a" font-size="18" font-weight="700">ASSISTANTS</text>
+  <text x="72" y="184" fill="#6a6a6a" font-size="12.5">work helpers</text>
+  <text x="72" y="202" fill="#6a6a6a" font-size="11.5">Carry the work I already have</text>
+  <rect x="78" y="255" width="284" height="98" rx="8" fill="#ffffff" stroke="#8a8278" stroke-width="1.5"/>
+  <text x="96" y="285" fill="#1a1a1a" font-size="14.5" font-weight="600">Secretary Agent</text>
+  <text x="96" y="303" fill="#6a6a6a" font-size="12">Watches my inboxes and collects</text>
+  <text x="96" y="321" fill="#6a6a6a" font-size="12">unhandled items so nothing slips.</text>
+  <rect x="670" y="130" width="340" height="373" rx="14" fill="#efe9e1" stroke="#d8d0c6" stroke-width="1.5"/>
+  <text x="692" y="164" fill="#1a1a1a" font-size="18" font-weight="700">BUILDERS</text>
+  <text x="692" y="184" fill="#6a6a6a" font-size="12.5">project agents</text>
+  <text x="692" y="202" fill="#6a6a6a" font-size="11.5">Create the things I want to make</text>
+  <rect x="698" y="255" width="284" height="98" rx="8" fill="#ffffff" stroke="#8a8278" stroke-width="1.5"/>
+  <text x="716" y="285" fill="#1a1a1a" font-size="14.5" font-weight="600">Game Agent</text>
+  <text x="716" y="303" fill="#6a6a6a" font-size="12">Turns a game idea into a design</text>
+  <text x="716" y="321" fill="#6a6a6a" font-size="12">doc and core mechanics.</text>
+  <rect x="698" y="375" width="284" height="98" rx="8" fill="#ffffff" stroke="#8a8278" stroke-width="1.5"/>
+  <text x="716" y="405" fill="#1a1a1a" font-size="14.5" font-weight="600">PM Agent</text>
+  <text x="716" y="423" fill="#6a6a6a" font-size="12">Turns a rough product idea into a</text>
+  <text x="716" y="441" fill="#6a6a6a" font-size="12">small, buildable spec pack.</text>
+  <circle cx="530" cy="233" r="18" fill="#4a4a4a"/>
+  <path d="M 498,285 Q 498,245 530,245 Q 562,245 562,285 Z" fill="#4a4a4a"/>
+  <text x="530" y="311" text-anchor="middle" fill="#1a1a1a" font-size="16" font-weight="700">Me</text>
+  <text x="530" y="329" text-anchor="middle" fill="#6a6a6a" font-size="11">raw work + ideas</text>
+  <line x1="498" y1="240" x2="394" y2="212" stroke="#3f6896" stroke-width="1.8" marker-end="url(#a-blue)"/>
+  <text x="444" y="214" text-anchor="middle" fill="#3f6896" font-size="12">work · inboxes</text>
+  <line x1="394" y1="270" x2="498" y2="274" stroke="#4f8a76" stroke-width="1.8" marker-end="url(#a-green)"/>
+  <text x="444" y="294" text-anchor="middle" fill="#4f8a76" font-size="12">handled · digests</text>
+  <line x1="562" y1="240" x2="666" y2="212" stroke="#3f6896" stroke-width="1.8" marker-end="url(#a-blue)"/>
+  <text x="616" y="214" text-anchor="middle" fill="#3f6896" font-size="12">rough ideas</text>
+  <line x1="666" y1="270" x2="562" y2="274" stroke="#4f8a76" stroke-width="1.8" marker-end="url(#a-green)"/>
+  <text x="616" y="294" text-anchor="middle" fill="#4f8a76" font-size="12">results</text>
+  <text x="220" y="535" text-anchor="middle" fill="#3f6896" font-size="15" font-weight="700">Lighten the load</text>
+  <text x="840" y="535" text-anchor="middle" fill="#4f8a76" font-size="15" font-weight="700">Build the future</text>
+  <line x1="60" y1="593" x2="92" y2="593" stroke="#3f6896" stroke-width="1.8" marker-end="url(#a-blue)"/>
+  <text x="100" y="597" fill="#6a6a6a" font-size="12">I hand over work &amp; ideas</text>
+  <line x1="320" y1="593" x2="352" y2="593" stroke="#4f8a76" stroke-width="1.8" marker-end="url(#a-green)"/>
+  <text x="360" y="597" fill="#6a6a6a" font-size="12">agents return value</text>
+</svg>

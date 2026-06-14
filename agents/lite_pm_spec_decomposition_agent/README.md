@@ -1,76 +1,69 @@
-# Lite PM Spec Decomposition Agent
+# agent_worlds
 
-## Purpose
+**English** · [中文](README.zh.md)
 
-This agent helps a solo founder or solo developer turn rough product ideas into a small, executable spec pack.
+<p align="center">
+  <img src="diagrams/concept.svg" alt="agent_worlds — two worlds of agents that serve me" width="860">
+</p>
 
-It is intentionally lightweight. The goal is to reduce decision drift, not to create heavy PM paperwork.
+A personal collection of AI agents — recurring workflows and creative work,
+distilled into reusable agents I can pick up at any time.
 
-## Role
+Every agent falls into one of two worlds:
 
-The agent standardizes PM decisions into:
+| | **assistants** | **builders** |
+|---|---|---|
+| **Purpose** | Carry the work I already have | Create the things I want to make |
+| **Faces** | My existing job & daily load | New projects & ideas |
+| **Does** | Handles chores, collects unhandled items | Designs and decomposes projects |
+| **In one line** | *Lighten the load* | *Build the future* |
 
-- A clear project brief
-- A locked MVP scope
-- A small feature spec
-- A task list with acceptance criteria
-- Open questions that block implementation
+- **assistants** — work helpers. They watch my inboxes, collect what needs
+  attention (mentions, DMs, todos), and take routine work off my plate.
+- **builders** — project agents. They turn rough ideas into buildable plans:
+  product specs, game designs, and whatever I decide to make next.
 
-## When To Use
+## Structure
 
-Use this agent when:
+```
+agent_worlds/
+├── agents/
+│   ├── assistants/                work helpers
+│   │   └── secretary-agent/        inbox & todo collector
+│   └── builders/                  project agents
+│       ├── pm-agent/               rough idea → spec pack
+│       └── game-agent/             game design & mechanics
+└── diagrams/                      shared diagram assets + generators
+```
 
-- A new project idea needs to become buildable
-- A feature is still vague
-- You need to decide what is MVP vs later
-- Development is about to start
-- Scope is expanding and needs to be cut back
+## Agents
 
-## Default Output
+### assistants
 
-Every project should start with these three files:
+| Agent | One line |
+|-------|----------|
+| [secretary-agent](agents/assistants/secretary-agent/) | Watches my inboxes and collects unhandled items so nothing slips. |
 
-- `00_project_brief.md`
-- `01_mvp_spec.md`
-- `02_tasks_acceptance.md`
+### builders
 
-Optional files can be added only when needed:
+| Agent | One line |
+|-------|----------|
+| [pm-agent](agents/builders/pm-agent/) | Turns a rough product idea into a small, buildable spec pack. |
+| [game-agent](agents/builders/game-agent/) | Turns a game idea into a design doc and core mechanics. |
 
-- `03_open_questions.md`
-- `04_change_log.md`
+## Conventions
 
-## Operating Rules
+These are the ground rules every agent follows — so the collection stays consistent as it grows.
 
-- Prefer defaults over asking too many questions.
-- Ask only questions that affect implementation structure.
-- Mark every requirement as `P0`, `P1`, or `Later`.
-- Every `P0` item must have acceptance criteria.
-- Keep `Out of Scope` explicit.
-- Do not expand into design, engineering, QA, and release agents until the project needs it.
+1. **Directory name**: short and kebab-case, ending in `-agent` — e.g. `pm-agent`, `game-agent`, `secretary-agent`.
+2. **README first line is the summary**: right under the H1 title, write one sentence describing the agent. Keep it short. That line is the single source of truth — the concept diagram reads it automatically. Anything detailed lives deeper in the README, not in that line.
+3. **Two pieces per agent**: `README.md` (the agent, for both humans and the LLM) and a `<agent-name>-system/` directory (the methodology it operates on, e.g. `pm-system/`, `game-system/`, `secretary-system/` — named after the agent so its owner is obvious).
+4. **Bilingual README**: every agent ships `README.md` (English) and `README.zh.md` (中文), with a language switcher on the first line of each.
+5. **Diagram text is English only**; the diagram is generated, not drawn — run `python3 diagrams/generate_concept.py`. It scans `agents/` and pulls each summary from the English `README.md`. Never edit the diagram by hand.
 
-## Priority Standard
+## Adding a New Agent
 
-- `P0`: Required for MVP validation. Without it, the core loop cannot be tested.
-- `P1`: Important for V1 quality, but not required to validate the MVP.
-- `Later`: Useful future work. Not part of the current build.
-
-## Decision Status
-
-Use these labels when a detail is unclear:
-
-- `Decided`: Confirmed by the owner.
-- `Assumption`: Reasonable default used to avoid blocking.
-- `Open`: Needs owner decision before implementation.
-- `Deferred`: Intentionally postponed.
-- `Rejected`: Explicitly not part of this version.
-
-## Workflow
-
-1. Read the raw idea, notes, or PM decision.
-2. Extract the core product goal.
-3. Define the MVP loop.
-4. Split features into `P0`, `P1`, and `Later`.
-5. Generate the three-file spec pack.
-6. Run the checklist in `templates/spec_checklist.md`.
-7. Ask only blocking open questions.
-
+1. Decide the world: **assistant** (helps with existing work) or **builder** (creates something new).
+2. Create `agents/<world>/<name>-agent/`.
+3. Add `README.md` + `README.zh.md` (short H1 + one-line summary on the first prose line) and a `<name>-system/` directory (the `<name>` without the `-agent` suffix — e.g. `pm-agent` → `pm-system/`). The `/new-agent` skill does all of this for you.
+4. Run `python3 diagrams/generate_concept.py` to refresh the concept diagram, and add a row to the table above.
