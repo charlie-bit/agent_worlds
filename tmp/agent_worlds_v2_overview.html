@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agent_worlds — 公司化重构 Overview</title>
+  <style>
+    :root {
+      --bg: #0d1117; --card: #161b22; --border: #30363d;
+      --text: #c9d1d9; --heading: #f0f6fc; --accent: #58a6ff;
+      --green: #3fb950; --yellow: #d29922; --red: #f85149;
+      --purple: #bc8cff; --orange: #d18616; --cyan: #39d2c0;
+      --muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+           background: var(--bg); color: var(--text); line-height: 1.6;
+           padding: 2rem; max-width: 1280px; margin: 0 auto; }
+    h1 { color: var(--heading); font-size: 1.8rem; margin-bottom: 0.4rem; }
+    h2 { color: var(--accent); font-size: 1.3rem; margin: 2rem 0 1rem;
+         border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { color: var(--heading); font-size: 1rem; margin: 1.2rem 0 0.6rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.88rem; }
+    th, td { padding: 0.55rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+    th { background: #21262d; color: var(--heading); font-weight: 600; }
+    td { vertical-align: top; }
+    code { background: #21262d; padding: 2px 6px; border-radius: 4px;
+           font-size: 0.83rem; color: var(--orange); font-family: 'SF Mono', Consolas, monospace; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px;
+           font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .ok  { background: #1a3a1a; color: var(--green); }
+    .stub { background: #2d1a1a; color: var(--red); }
+    .mid { background: #1f3a5f; color: var(--accent); }
+    .note { background: #1a2332; border-left: 3px solid var(--accent);
+            padding: 0.8rem 1rem; margin: 0.8rem 0; border-radius: 0 4px 4px 0; font-size: 0.88rem; }
+    .warn { background: #2d1f00; border-left-color: var(--yellow); }
+    .good { background: #112a12; border-left-color: var(--green); }
+    .bad  { background: #2d1212; border-left-color: var(--red); }
+    pre { font-family: 'SF Mono', Consolas, monospace; font-size: 0.8rem;
+          line-height: 1.7; overflow-x: auto; color: var(--text); }
+
+    .fund-flow { display: flex; flex-direction: column; gap: 0.4rem; margin: 1rem 0; }
+    .ff-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .ff-box { border: 1px solid; border-radius: 6px; padding: 0.4rem 0.9rem;
+              font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .ff-user   { border-color: var(--accent); color: var(--accent); background: #1f3a5f; }
+    .ff-active { border-color: var(--green); color: var(--green); background: #1a3a1a; }
+    .ff-stub   { border-color: var(--red); color: var(--red); background: #2d1a1a; }
+    .ff-gate   { border-color: var(--yellow); color: var(--yellow); background: #2d2000; }
+    .ff-system { border-color: var(--muted); color: var(--muted); background: #21262d; }
+    .ff-arrow { color: var(--accent); font-weight: bold; font-size: 1.1rem; }
+    .ff-label  { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+
+    .domain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .entity { background: #21262d; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+    .entity-name { color: var(--heading); font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .entity-desc { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.6rem; }
+    .entity-fields { font-size: 0.8rem; }
+    .entity-fields li { list-style: none; padding: 2px 0; }
+    .entity-fields li code { font-size: 0.78rem; }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .compare .col { border-radius: 6px; padding: 1rem; }
+    .compare .heavy { background: #2d1212; border: 1px solid #5a2222; }
+    .compare .light { background: #112a12; border: 1px solid #225a22; }
+    .compare h4 { font-size: 0.9rem; margin-bottom: 0.6rem; }
+    .compare .heavy h4 { color: var(--red); }
+    .compare .light h4 { color: var(--green); }
+    .compare ul { margin-left: 1.1rem; font-size: 0.84rem; line-height: 1.8; }
+
+    .verdict { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; }
+    .v-yes { background: #1a3a1a; color: var(--green); }
+    .v-no  { background: #2d1a1a; color: var(--red); }
+    .v-part{ background: #2d2000; color: var(--yellow); }
+  </style>
+</head>
+<body>
+
+<h1>agent_worlds — 公司化重构 Overview</h1>
+<p class="subtitle">
+  Repo: charlie-bit/agent_worlds &nbsp;|&nbsp; 本次工作: Issue #5 评审 + V1 轻量重构 &nbsp;|&nbsp;
+  Updated: 2026-06-20 &nbsp;|&nbsp; Source: issue #5 + lizyoko9/bitdance-agenthub 借鉴 + 本地重构
+</p>
+
+<!-- ============================================================ -->
+<h2>0. 这次我们做了什么(TL;DR)</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.92rem;">
+    把 <code>agent_worlds</code> 从一个<strong>扁平的 agent 文档集</strong>,重构成一个
+    <strong>"一个人的 agent 公司"</strong> —— 用 <code>公司 → 部门 → 角色 → agent</code> 的层级组织,
+    并把"流程"从 prompt 里拎出来变成<strong>声明式数据</strong>(workflow YAML)。
+    刻意保持 <strong>V1 轻量:零运行时代码,纯文件 + 一个 workflow</strong>。
+  </p>
+  <div class="fund-flow" style="margin-top:1rem;">
+    <div class="ff-row">
+      <div class="ff-box ff-system">扁平 agent 集合<br><small>assistants / builders</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-active">公司化结构<br><small>departments → roles</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-active">流程即数据<br><small>workflows/*.yaml</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-gate">下一步(未做)<br><small>薄 orchestrator 执行 workflow</small></div>
+    </div>
+  </div>
+  <div class="note good">
+    <strong>核心原则:</strong> 流程是<strong>数据,不是 prompt</strong>。要改公司怎么运作,改 workflow YAML;
+    角色之间用<strong>产物文件</strong>交接 —— 文件系统就是 message bus,无服务、无常驻进程。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>1. 背景:Issue #5 在说什么</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:1rem;">
+    <a href="https://github.com/charlie-bit/agent_worlds/issues/5" style="color:var(--accent);">Issue #5</a>
+    "目录 + 思想都需要调整"提出:<em>agent_worlds 缺的不是 Agent,而是 Organization</em>,
+    并主张引入 <code>Company → Department → Role → Workflow → Agent</code> 的抽象,
+    分 V2→V5 逐步建成"自治软件公司 OS"。
+  </p>
+  <h3>1.1 Issue 提议的演进路线(原文)</h3>
+  <div class="fund-flow">
+    <div class="ff-row">
+      <div class="ff-box ff-system">V2<br>Organization + Standards</div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-system">V3<br>Message Bus + Registry</div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-system">V4<br>Decision Center (Bless)</div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-system">V5<br>自治软件公司</div>
+    </div>
+  </div>
+  <p style="font-size:0.85rem; color:var(--muted); margin-top:0.6rem;">
+    Issue 还想引入 6 个顶级目录(organizations / standards / workflows / services / worlds / runtime)、
+    Go 实现的 <code>MessageBus struct</code> + Topic、Capability Registry 自动匹配、DecisionCenter 服务。
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2>2. Issue 评审:对在哪、错在哪</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:1rem;">
+    结论:<strong>问题感知对,解法太重、且时机错</strong>。逐条评审 —
+  </p>
+  <table>
+    <tr><th style="width:38%;">Issue 的主张</th><th style="width:12%;">判定</th><th>评审</th></tr>
+    <tr>
+      <td>缺的不是 Agent,而是组织 / 编排</td>
+      <td><span class="verdict v-yes">直觉对</span></td>
+      <td>现有 3 个 agent 是孤岛,pm 产出 <code>02_tasks_acceptance.md</code> 后无下游。"缺衔接"是真问题。</td>
+    </tr>
+    <tr>
+      <td>流程应是系统内置能力,而非 prompt 硬编码</td>
+      <td><span class="verdict v-yes">完全对</span></td>
+      <td>这是本次重构采纳的<strong>核心思想</strong> → 落地为 <code>workflows/software_feature.yaml</code>。</td>
+    </tr>
+    <tr>
+      <td>Company→Department→Role→Workflow→Agent 层级</td>
+      <td><span class="verdict v-yes">采纳</span></td>
+      <td>方向与 owner 设想一致。V1 落地,只是 Role=Agent 暂不拆(演进路径保留)。</td>
+    </tr>
+    <tr>
+      <td>立刻上 MessageBus(Go struct + Topic)</td>
+      <td><span class="verdict v-no">太重</span></td>
+      <td>用<strong>产物文件交接</strong>替代。仓库零后端代码,引入 Go 事件总线跨了好几个数量级。</td>
+    </tr>
+    <tr>
+      <td>Capability Registry 自动匹配</td>
+      <td><span class="verdict v-no">过早</span></td>
+      <td>V1 在 workflow 里直接写 <code>role:</code> 即可。8 个角色不需要注册中心。</td>
+    </tr>
+    <tr>
+      <td>DecisionCenter (Bless) 借鉴自 AgentHub</td>
+      <td><span class="verdict v-no">溯源错误</span></td>
+      <td>通读 AgentHub 的 OVERVIEW + CLAUDE.md:<strong>没有 Bless / DecisionCenter / Organization</strong>。
+          其 Orchestrator 只是"带 dispatch 工具的特殊 Agent",非组织架构。Issue 把自己的设想借 AgentHub 之名包装了。</td>
+    </tr>
+    <tr>
+      <td>6 个顶级目录 + V5 自治公司 OS</td>
+      <td><span class="verdict v-part">时机错</span></td>
+      <td>在 2/3 角色还是 TBD 空壳、连第二个完整 agent 都没有时谈摩天楼。
+          pm 自己写着"need 之前不要膨胀",issue 违背了项目自定的克制原则。</td>
+    </tr>
+  </table>
+
+  <h3>2.1 轻 vs 重:同一需求的两种解法</h3>
+  <div class="compare">
+    <div class="col heavy">
+      <h4>✗ Issue 的重方案(V2-V5)</h4>
+      <ul>
+        <li>6 个顶级目录</li>
+        <li>Go <code>MessageBus</code> struct + Topic</li>
+        <li>Capability Registry 自动匹配</li>
+        <li>DecisionCenter 独立服务</li>
+        <li>独立 runtime</li>
+        <li>大量后端代码</li>
+      </ul>
+    </div>
+    <div class="col light">
+      <h4>✓ 本次的轻方案(V1)</h4>
+      <ul>
+        <li>1 个 <code>company.yaml</code></li>
+        <li>文件系统即总线(产物文件交接)</li>
+        <li>workflow 里直接写 <code>role:</code></li>
+        <li>各角色 <code>system/</code> 里一条 ADR 约定</li>
+        <li>一个薄 orchestrator agent(markdown)</li>
+        <li><strong>0 行后端代码</strong></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. 从 AgentHub 借鉴了什么(真正值得抄的)</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:0.8rem;">
+    讽刺的是,AgentHub 最该被我们抄的不是 issue 想抄的"组织运行时",而是它的<strong>文档工程</strong> —
+    对我们这种文档库,零代码成本、最高回报。
+  </p>
+  <table>
+    <tr><th>AgentHub 的做法</th><th>我们的采纳</th></tr>
+    <tr><td>四层文档分工(OVERVIEW 地图 / CLAUDE 规则 / specs 契约 / skills 配方)</td>
+        <td><span class="tag ok">✅ 采纳</span> 新增仓库级 <code>CLAUDE.md</code>(规则);README 升级为 company 地图</td></tr>
+    <tr><td>spec 驱动 + "必须停下来问人"清单</td>
+        <td><span class="tag ok">✅ 采纳</span> 写进 <code>CLAUDE.md</code> 协作规则</td></tr>
+    <tr><td>单一数据源(黑名单=契约、diagram 自动生成)</td>
+        <td><span class="tag ok">✅ 强化</span> <code>company.yaml</code> 成为组织唯一事实来源 + diagram 数据源</td></tr>
+    <tr><td>Orchestrator = 特殊 Agent,不是独立服务</td>
+        <td><span class="tag mid">📌 借鉴</span> 计划中的 orchestrator 也是一个 agent,非独立 runtime</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2>4. V1 落地结构</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <h3>4.1 目录(重构后)</h3>
+  <pre>
+agent_worlds/                = the company 本身
+├── company.yaml             组织声明:departments → roles(单一事实来源)
+├── CLAUDE.md                如何在本仓库工作(规则,新增)
+├── README.md / .zh.md       公司叙事门面(双语只在顶层)
+├── workflows/
+│   └── software_feature.yaml  流程即数据
+├── departments/             取代 assistants/builders
+│   ├── product/      pm(active) · researcher(stub)
+│   ├── engineering/  architect · backend · web · game(全 stub)
+│   ├── quality/      qa(stub)
+│   └── support/      secretary(stub)
+└── diagrams/                生成的组织图(读 company.yaml)</pre>
+
+  <h3>4.2 核心 Domain 对象</h3>
+  <div class="domain-grid">
+    <div class="entity">
+      <div class="entity-name">company.yaml</div>
+      <div class="entity-desc">组织的单一事实来源,也是 diagram 数据源</div>
+      <ul class="entity-fields">
+        <li><code>company</code> / <code>tagline</code></li>
+        <li><code>departments[]</code> 4 个部门</li>
+        <li><code>roles[]</code> 含 summary + status</li>
+      </ul>
+    </div>
+    <div class="entity">
+      <div class="entity-name">department(部门)</div>
+      <div class="entity-desc">按职能聚合角色</div>
+      <ul class="entity-fields">
+        <li><code>product</code> 决定做什么</li>
+        <li><code>engineering</code> 构建</li>
+        <li><code>quality</code> 验证</li>
+        <li><code>support</code> 承接日常</li>
+      </ul>
+    </div>
+    <div class="entity">
+      <div class="entity-name">role / agent</div>
+      <div class="entity-desc">岗位 = agent(V1 一对一)</div>
+      <ul class="entity-fields">
+        <li><code>agent.md</code> 角色本体</li>
+        <li><code>system/</code> 方法论(可选)</li>
+        <li><code>status</code> active / stub</li>
+      </ul>
+    </div>
+    <div class="entity">
+      <div class="entity-name">workflow</div>
+      <div class="entity-desc">把角色串成流水线;流程即数据</div>
+      <ul class="entity-fields">
+        <li><code>steps[]</code> 步骤</li>
+        <li><code>consumes</code> / <code>produces</code> 产物交接</li>
+        <li><code>gate</code> owner 确认点</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. 默认流程 software_feature(owner 最初的设想)</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:1rem;">
+    owner 最初写的 <code>PM → 调研 → 需求确认 → 架构设计 → Backend/Game/Web → 测试 → 发布</code>,
+    一字不差地变成一个可编辑的 YAML,而不是 prompt。
+    图例:
+    <span class="tag ok">✅ active</span>
+    <span class="tag stub">❌ stub(占位)</span>
+    <span class="tag" style="background:#2d2000;color:var(--yellow);">★ owner gate</span>
+  </p>
+  <div class="fund-flow">
+    <div class="ff-row">
+      <div class="ff-box ff-stub" style="min-width:8rem;">① research<br><small>researcher</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-active" style="min-width:8rem;">② requirements ★<br><small>pm(active)</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-stub" style="min-width:8rem;">③ architecture<br><small>architect</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-stub" style="min-width:8rem;">④ build<br><small>backend/web/game</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-stub" style="min-width:8rem;">⑤ test<br><small>qa</small></div>
+      <div class="ff-arrow">→</div>
+      <div class="ff-box ff-active" style="min-width:8rem;">⑥ release ★<br><small>pm</small></div>
+    </div>
+    <div class="ff-row" style="margin-top:0.4rem;">
+      <div class="ff-label">每步 consumes 上游产物、produces 下游产物;★ = 停下等 owner 确认</div>
+    </div>
+  </div>
+
+  <h3>5.1 产物交接链(文件系统即 message bus)</h3>
+  <pre>
+research_notes.md      → pm 读
+   ↓ pm 产出
+00_project_brief.md
+01_mvp_spec.md         → architect 读
+02_tasks_acceptance.md → backend/web/game 读  ★scope 在此锁定(gate)
+   ↓ architect 产出
+architecture.md, ADR.md → build 读
+   ↓ build 产出
+implementation.md + code → qa 读
+   ↓ qa 产出
+test_report.md         → pm 读  ★发布前最终确认(gate)</pre>
+  <div class="note">
+    一步何时能开始?当它的 <code>consumes</code> 文件存在;何时结束?当 <code>produces</code> 文件写出。
+    没有 daemon,没有事件总线 —— 这就是"轻"的全部秘密。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>6. 角色完成度追踪</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="margin-bottom:1rem; font-size:0.88rem; color:var(--muted);">
+    图例:
+    <span class="tag ok">✅ active(完整)</span> &nbsp;
+    <span class="tag stub">❌ stub(占位,用到再充实)</span>
+  </p>
+  <table>
+    <tr><th>部门</th><th>角色</th><th>状态</th><th>说明</th></tr>
+    <tr><td rowspan="2" style="color:var(--accent);">product</td>
+        <td><code>pm</code></td><td><span class="tag ok">✅ active</span></td>
+        <td>完整:优先级标准(P0/P1/Later)+ 决策状态 + 7 步 workflow + 模板包。<strong>完整角色的参照样板</strong>。</td></tr>
+    <tr><td><code>researcher</code></td><td><span class="tag stub">❌ stub</span></td><td>调研问题空间,产出 research_notes.md</td></tr>
+    <tr><td rowspan="4" style="color:var(--purple);">engineering</td>
+        <td><code>architect</code></td><td><span class="tag stub">❌ stub</span></td><td>MVP spec → 系统设计 + ADR</td></tr>
+    <tr><td><code>backend</code></td><td><span class="tag stub">❌ stub</span></td><td>服务端逻辑 / API / 数据</td></tr>
+    <tr><td><code>web</code></td><td><span class="tag stub">❌ stub</span></td><td>Web 客户端</td></tr>
+    <tr><td><code>game</code></td><td><span class="tag stub">❌ stub</span></td><td>游戏设计 + 核心玩法(原 game-agent)</td></tr>
+    <tr><td style="color:var(--green);">quality</td>
+        <td><code>qa</code></td><td><span class="tag stub">❌ stub</span></td><td>对照验收标准校验</td></tr>
+    <tr><td style="color:var(--muted);">support</td>
+        <td><code>secretary</code></td><td><span class="tag stub">❌ stub</span></td><td>收件箱收集(原 secretary-agent,在 critical path 外)</td></tr>
+  </table>
+  <div class="note warn">
+    <strong>stub 是有意的设计,不是缺陷。</strong> stub 角色的存在是为了让 workflow 能端到端跑通骨架;
+    等真有任务需要时再充实 —— 这正是 pm 自己写下的"need 之前不要膨胀"。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>7. 本次改动清单</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <table>
+    <tr><th>#</th><th>改动</th><th>状态</th><th>说明</th></tr>
+    <tr><td>1</td><td>目录重组为 departments 结构</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>assistants/builders → departments/{product,engineering,quality,support};README.md→agent.md;&lt;name&gt;-system→system;全程 <code>git mv</code> 保历史</td></tr>
+    <tr><td>2</td><td>新增 company.yaml</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>4 部门 8 角色,组织单一事实来源</td></tr>
+    <tr><td>3</td><td>新增 workflows/software_feature.yaml</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>流程即数据:steps + consumes/produces + gate</td></tr>
+    <tr><td>4</td><td>补 5 个 stub 角色 + 仓库级 CLAUDE.md</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>researcher/architect/backend/web/qa;CLAUDE.md 协作规则层</td></tr>
+    <tr><td>5</td><td>重写 README + diagram 生成器</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>README 改 company 叙事;generate_concept.py 改读 company.yaml 渲染组织图(零依赖解析器)</td></tr>
+    <tr><td>6</td><td>消除两处重复</td><td><span class="tag ok">✅ 完成</span></td>
+        <td><code>templates/</code>(与 pm system 逐字重复)+ 根 <code>agent.md</code>(精华并入 pm)</td></tr>
+  </table>
+  <div class="note warn">
+    <strong>尚未提交。</strong> 所有改动在工作区,git 已正确识别为 rename(<code>R</code>,保留历史)。等 owner 决定是否 commit。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>8. 下一步</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <div class="fund-flow">
+    <div class="ff-row">
+      <div class="ff-box ff-gate">薄 orchestrator agent<br><small>真正执行 workflow:按步派活给角色、在 gate 停下</small></div>
+    </div>
+    <div class="ff-row" style="margin-top:0.5rem;">
+      <div class="ff-box ff-system">按需充实 stub 角色<br><small>哪个被真正用到再填厚哪个</small></div>
+    </div>
+    <div class="ff-row" style="margin-top:0.5rem;">
+      <div class="ff-box ff-system">(可选)给 issue #5 回复<br><small>接受哪个直觉 / 不接受哪个方案 / 替代路线</small></div>
+    </div>
+  </div>
+  <div class="note good">
+    <strong>原则:</strong> V1 刻意保持轻 —— 文件 + 一个 workflow,没有 runtime。
+    公司靠<strong>被使用</strong>而成长,而不是被过度设计。orchestrator 是自然的下一步,
+    但只在结构配得上它之后才做。
+  </div>
+</div>
+
+<p style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:2rem;">
+  agent_worlds V2(公司化)· 本次会话整理 · 格式参考 defi_borrow_overview.html
+</p>
+
+</body>
+</html>

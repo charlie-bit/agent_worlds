@@ -1,0 +1,55 @@
+# agent_worlds — the company.
+#
+# This file is the single source of truth for the org structure:
+#   company -> department -> role
+# Each role maps to a directory: departments/<department>/<role>/agent.md
+#
+# It is also the data source for the concept diagram
+# (diagrams/generate_concept.py reads THIS file, not the agent READMEs).
+#
+# To add a role: create departments/<dept>/<role>/agent.md, add it here,
+# then run `python3 diagrams/generate_concept.py`.
+
+company: agent_worlds
+tagline: A one-person company of agents — from raw idea to release.
+
+departments:
+  product:
+    purpose: Decide what to build and why.
+    roles:
+      pm:
+        summary: Turns a rough product idea into a small, buildable spec pack.
+        status: active
+      researcher:
+        summary: Investigates the problem space and surfaces findings before scope is locked.
+        status: stub
+
+  engineering:
+    purpose: Build what product specified.
+    roles:
+      architect:
+        summary: Turns a locked MVP spec into a system design and key decisions (ADRs).
+        status: stub
+      backend:
+        summary: Builds server-side logic, APIs, and data from tasks + architecture.
+        status: stub
+      web:
+        summary: Builds the web client from tasks + architecture.
+        status: stub
+      game:
+        summary: Turns a game idea into a design doc and core mechanics.
+        status: stub
+
+  quality:
+    purpose: Verify what engineering built.
+    roles:
+      qa:
+        summary: Validates deliverables against acceptance criteria and reports results.
+        status: stub
+
+  support:
+    purpose: Carry the recurring work, off the critical path.
+    roles:
+      secretary:
+        summary: Watches my inboxes, triages what arrives, and produces a dated digest so nothing slips.
+        status: active

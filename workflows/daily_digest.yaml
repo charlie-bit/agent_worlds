@@ -1,0 +1,71 @@
+# daily_digest — the secretary's recurring sweep: inboxes → triaged digest.
+#
+# The flow is DATA, not a hardcoded prompt (same rule as software_feature.yaml).
+# To change what the secretary does, edit the steps — never bury it in a prompt.
+#
+# How to read a step:
+#   role      which role (see company.yaml) does the work — here, all `secretary`
+#   consumes  artifact files this step needs as input (produced upstream)
+#   produces  artifact files this step writes (the hand-off to downstream)
+#   parallel  the listed collectors run on the same step concurrently
+#   foreach   run one instance per enabled item in the registry (open-ended fan-out)
+#
+# Artifacts are plain files in the run's workspace. The filesystem is the message
+# bus: collect → raw_items.jsonl, triage → topics.jsonl, render → the digest.
+#
+# WHAT MAKES THIS WORKFLOW DIFFERENT FROM software_feature:
+# It is NOT triggered by an upstream artifact — it is triggered by the CLOCK.
+# See `trigger:` below. This is the first clock-driven workflow in the repo, so it
+# introduces a top-level `trigger` field to the workflow schema (see M4.2 note in
+# the secretary status board). A workflow with no `trigger` is run on demand, as
+# before — this field is additive and optional.
+
+name: daily_digest
+description: Daily sweep of the owner's inboxes into one triaged, dated digest.
+
+# Clock-driven, not artifact-driven. `schedule` uses cron; `on_demand` allows a
+# manual run for any date. The runner is still file-based — there is no daemon;
+# an external scheduler (cron, launchd, CI) invokes the run at `schedule` time.
+trigger:
+  schedule: "0 8 * * *"        # 08:00 owner-local, every day
+  timezone_from: registry      # owner.timezone in the external registry
+  on_demand: true              # also runnable manually: daily_digest [date]
+
+# Inputs every run needs, before any step:
+#   - the external source registry (config.md points to it)
+#   - the target date (defaults to today in owner.timezone)
+inputs:
+  registry: external           # ~/.agent_worlds/secretary/registry.yaml
+  date: today
+
+steps:
+  - id: collect
+    role: secretary
+    # One collector per ENABLED source in the registry — open-ended, never a
+    # hardcoded list. Each emits raw items of the shared schema (item_schema.md).
+    # Collectors are independent → run concurrently. A source whose adapter is
+    # missing does not abort the run; it records "did not run" in coverage.
+    foreach: registry.enabled_sources   # slack, jira, github, gmail, feishu, …
+    spec: collectors/{source}.md
+    produces: [raw_items.jsonl, coverage.partial.jsonl]
+
+  - id: triage
+    role: secretary
+    spec: triage.md
+    # Barrier: triage must see ALL collectors' raw items before it can merge,
+    # dedupe, and cluster across sources. Starts only when every collect
+    # instance has written its raw_items.jsonl.
+    consumes: [raw_items.jsonl]
+    produces: [topics.jsonl]
+
+  - id: render
+    role: secretary
+    spec: digest_template.md
+    consumes: [topics.jsonl, coverage.partial.jsonl]
+    produces: ["outbox/{date}-digest.md"]
+    # Coverage section is built from every collector's coverage.partial.jsonl, so
+    # "no results" vs "did not run" stays distinguishable end-to-end.
+
+# No release/gate step: the digest is read-only output for the owner, not a
+# change to ship. The owner reads outbox/{date}-digest.md; any follow-up action
+# (reply, file a ticket) is the owner's, never the secretary's (see agent.md).

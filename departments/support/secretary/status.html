@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>secretary — 角色建设状态看板</title>
+  <style>
+    :root {
+      --bg: #0d1117; --card: #161b22; --border: #30363d;
+      --text: #c9d1d9; --heading: #f0f6fc; --accent: #58a6ff;
+      --green: #3fb950; --yellow: #d29922; --red: #f85149;
+      --purple: #bc8cff; --orange: #d18616; --cyan: #39d2c0;
+      --muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+           background: var(--bg); color: var(--text); line-height: 1.6;
+           padding: 2rem; max-width: 1280px; margin: 0 auto; }
+    h1 { color: var(--heading); font-size: 1.8rem; margin-bottom: 0.4rem; }
+    h2 { color: var(--accent); font-size: 1.3rem; margin: 2rem 0 1rem;
+         border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { color: var(--heading); font-size: 1rem; margin: 1.2rem 0 0.6rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.88rem; }
+    th, td { padding: 0.55rem 0.8rem; text-align: left; border: 1px solid var(--border); }
+    th { background: #21262d; color: var(--heading); font-weight: 600; }
+    td { vertical-align: top; }
+    code { background: #21262d; padding: 2px 6px; border-radius: 4px;
+           font-size: 0.83rem; color: var(--orange); font-family: 'SF Mono', Consolas, monospace; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px;
+           font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .ok    { background: #1a3a1a; color: var(--green); }
+    .todo  { background: #2d1a1a; color: var(--red); }
+    .prog  { background: #2d2000; color: var(--yellow); }
+    .mid   { background: #1f3a5f; color: var(--accent); }
+    .defer { background: #21262d; color: var(--muted); }
+    .note { background: #1a2332; border-left: 3px solid var(--accent);
+            padding: 0.8rem 1rem; margin: 0.8rem 0; border-radius: 0 4px 4px 0; font-size: 0.88rem; }
+    .warn { background: #2d1f00; border-left-color: var(--yellow); }
+    .good { background: #112a12; border-left-color: var(--green); }
+    pre { font-family: 'SF Mono', Consolas, monospace; font-size: 0.8rem;
+          line-height: 1.7; overflow-x: auto; color: var(--text); }
+
+    .fund-flow { display: flex; flex-direction: column; gap: 0.4rem; margin: 1rem 0; }
+    .ff-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .ff-box { border: 1px solid; border-radius: 6px; padding: 0.4rem 0.9rem;
+              font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .ff-done   { border-color: var(--green); color: var(--green); background: #1a3a1a; }
+    .ff-next   { border-color: var(--accent); color: var(--accent); background: #1f3a5f; }
+    .ff-todo   { border-color: var(--red); color: var(--red); background: #2d1a1a; }
+    .ff-defer  { border-color: var(--muted); color: var(--muted); background: #21262d; }
+    .ff-arrow { color: var(--accent); font-weight: bold; font-size: 1.1rem; }
+    .ff-label  { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+
+    .domain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .entity { background: #21262d; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+    .entity-name { color: var(--heading); font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .entity-desc { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.6rem; }
+    .entity-fields { font-size: 0.8rem; }
+    .entity-fields li { list-style: none; padding: 2px 0; }
+    .entity-fields li code { font-size: 0.78rem; }
+
+    .ms { color: var(--heading); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<h1>secretary — 角色建设状态看板</h1>
+<p class="subtitle">
+  Role: <code>support/secretary</code> &nbsp;|&nbsp; Updated: 2026-06-21 &nbsp;|&nbsp;
+  格式参考: agent_worlds_v2_overview.html
+</p>
+
+<!-- ============================================================ -->
+<h2>0. 这是什么（TL;DR）</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.92rem;">
+    <code>secretary</code> 是 agent_worlds <strong>support 部门</strong>里、唯一<strong>在 critical path 之外</strong>的角色，
+    也是第一个<strong>对外部世界开放</strong>的角色。它每天扫一遍我的各个 inbox（Slack / Jira / GitHub…），
+    把"落了什么、什么需要我"整理成一份<strong>带日期的 digest</strong>，让事情不再 slip。
+  </p>
+  <div class="note good">
+    <strong>本会话定调：</strong> <span class="tag ok">md 优先 · 先保证数据</span>
+    <code>{date}-digest.md</code> 是<strong>可 diff 的数据底座</strong>（LLM 产出最可靠），
+    将来由一个渲染脚本吃 md 产出 <strong>HTML dashboard</strong>（给人看）——
+    这正是仓库已有的 <code>company.yaml → generate_concept.py → concept.svg</code> 同款模式。
+    JSON 输出层<strong>暂不做</strong>，等真有"非我们自己渲染器"的机器消费者再加。
+  </div>
+  <div class="note good">
+    <strong>方法层已写完（M0–M4 ✅），只差"通电"。</strong> 两个数据契约（raw item / topic）、
+    五个采集器规格（slack 可跑；jira/github 待写但 host 有现成 MCP；gmail/feishu 已选型待接适配器）、
+    分诊细则、digest 模板、以及把 A→B→C 串起来的 <code>workflows/daily_digest.yaml</code>（时钟触发）——都已落地为文件。
+  </div>
+  <div class="note warn">
+    <strong>唯一未通电项：M2.3 真跑一遍。</strong> 前置是 ① 外部 registry 文件（真实 channel/people ID，
+    在 repo 外）＋ ② MCP slack 已连。一旦备好，就能 collect→triage→render 出第一份真实
+    <code>outbox/{date}-digest.md</code>。M5（HTML dashboard）仍按计划延后。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>1. 子模块拆法</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:1rem;">
+    秘书的工作天然是这几块，我们按职责拆开，模块间靠<strong>文件交接</strong>
+    （filesystem 即 message bus）——所以<strong>流程整合 (D) 放最后</strong>，没有前面几块就没东西可串。
+  </p>
+  <table>
+    <tr><th style="width:46%;">职责</th><th>本质</th><th>模块</th></tr>
+    <tr><td>采集各 inbox（Slack / Jira / GitHub / Gmail / 飞书 …）</td><td>采集——每来源独立、可并行</td><td><code>A. collectors</code></td></tr>
+    <tr><td>合并 / 去重 / 聚类成 topic / 分级 / 打 tag</td><td>分诊——合并/聚类/分级</td><td><code>B. triage</code></td></tr>
+    <tr><td>渲染 <code>{date}-digest.md</code></td><td>产出</td><td><code>C. digest md</code></td></tr>
+    <tr><td>吃 md 产 HTML dashboard</td><td>dashboard 数据层</td><td><code>E. html</code>（暂缓 JSON）</td></tr>
+  </table>
+
+  <h3>1.1 Pipeline（数据流向 · 每阶段职责）</h3>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.6rem;">
+    左列 = 模块（含状态色），右列 = 它做什么 / 交接物。A→B→C→D 是主链；E 用虚线分隔（延后）。
+  </p>
+  <div class="fund-flow">
+
+    <!-- A -->
+    <div class="ff-row" style="align-items:flex-start;">
+      <div class="ff-box ff-next" style="min-width:13rem;">A. 采集器 (collectors)<br><small>开放注册表 · 见 §1.3</small></div>
+      <div class="ff-arrow" style="margin-top:0.4rem;">→</div>
+      <div style="font-size:0.84rem; line-height:1.7;">
+        <strong>一个开放的插件注册表</strong>，不是固定三个。每来源一个采集器，<strong>独立可并行</strong>，
+        各自产出 <strong>raw items（同一 schema）</strong>。来源会持续增加（Slack / Jira / GitHub / Calendar / Gmail / 飞书…）。
+        <span class="tag prog" style="margin-left:0.4rem;">🟡 slack 已写，余下待补</span>
+      </div>
+    </div>
+    <div class="ff-row" style="justify-content:center;"><div class="ff-arrow">▼</div></div>
+
+    <!-- B -->
+    <div class="ff-row" style="align-items:flex-start;">
+      <div class="ff-box ff-next" style="min-width:13rem;">B. 分诊 (triage)</div>
+      <div class="ff-arrow" style="margin-top:0.4rem;">→</div>
+      <div style="font-size:0.84rem; line-height:1.7;">
+        合并去重 → 聚类成 topic → tag（channel&gt;keyword&gt;person）→ 分组 → 分级 → 按 relation 路由。
+        <span class="tag ok" style="margin-left:0.4rem;">✅ 细则已写 (triage.md)</span>
+      </div>
+    </div>
+    <div class="ff-row" style="justify-content:center;"><div class="ff-arrow">▼</div></div>
+
+    <!-- C -->
+    <div class="ff-row" style="align-items:flex-start;">
+      <div class="ff-box ff-done" style="min-width:13rem;">C. 产出 (digest md)</div>
+      <div class="ff-arrow" style="margin-top:0.4rem;">→</div>
+      <div style="font-size:0.84rem; line-height:1.7;">
+        渲染 <code>outbox/{date}-digest.md</code>。
+        <span class="tag ok" style="margin-left:0.4rem;">✅ 模板已写好</span>
+      </div>
+    </div>
+    <div class="ff-row" style="justify-content:center;"><div class="ff-arrow">▼</div></div>
+
+    <!-- D -->
+    <div class="ff-row" style="align-items:flex-start;">
+      <div class="ff-box ff-done" style="min-width:13rem;">D. 流程整合 (flow)</div>
+      <div class="ff-arrow" style="margin-top:0.4rem;">→</div>
+      <div style="font-size:0.84rem; line-height:1.7;">
+        <code>workflows/daily_digest.yaml</code>，把 A→B→C 串起来 + 时钟触发。
+        <span class="tag ok" style="margin-left:0.4rem;">✅ 已写</span>
+      </div>
+    </div>
+
+    <!-- divider -->
+    <div class="ff-row" style="margin:0.6rem 0;">
+      <div style="flex:1; border-top:1px dashed var(--border);"></div>
+    </div>
+
+    <!-- E -->
+    <div class="ff-row" style="align-items:flex-start;">
+      <div class="ff-box ff-defer" style="min-width:13rem;">E. HTML dashboard</div>
+      <div class="ff-arrow" style="margin-top:0.4rem; opacity:0.5;">⇢</div>
+      <div style="font-size:0.84rem; line-height:1.7;">
+        render 脚本（像 <code>generate_concept.py</code> 那样吃 md）。
+        <span class="tag defer" style="margin-left:0.4rem;">⏸ 延后</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="note">
+    <strong>时序约束：</strong>A 各来源独立并行、产出同一 raw item schema；B 必须等全部 A 到齐才能聚类；
+    C 吃 B；D 声明式串起 A→B→C。<strong>跨模块共享 registry</strong>（<code>config.md</code>，A 读它）。
+  </div>
+
+  <h3>1.2 关键依赖（决定先后）</h3>
+  <table>
+    <tr><th>模块</th><th>依赖</th><th>约束</th></tr>
+    <tr><td><code>A</code> 采集器</td><td>共享 registry</td><td>内部互相独立 → 先做哪个都行</td></tr>
+    <tr><td><code>B</code> 分诊</td><td>全部 A</td><td><strong>不可 hardcode 来源数</strong>——有几个 collector 就吃几个</td></tr>
+    <tr><td><code>C</code> 产出</td><td>B</td><td>模板已就绪</td></tr>
+    <tr><td><code>D</code> 整合</td><td>A+B+C</td><td>最后做，只是把前三个串起来</td></tr>
+  </table>
+
+  <h3>1.3 采集器注册表（开放清单 · 能力 vs 适配器分离）</h3>
+  <div class="note">
+    <strong>关键设计：secretary 是 host 无关的。</strong> 角色定义和 registry <strong>只声明"能力"</strong>
+    （"读 Slack 发我的 DM"），<strong>绝不写</strong> host 特定的调用（如 <code>mcp__slack__…</code>）。
+    具体怎么连，是一层<strong>可插拔的适配器</strong>，由当前运行环境（host）解析：
+    <br>· <strong>Claude Code</strong> → MCP server &nbsp;·&nbsp; <strong>Codex</strong> → 它自己的连接器 &nbsp;·&nbsp; <strong>纯脚本</strong> → REST API + token
+    <br>换 host（如未来迁到 Codex）→ 换一份适配器绑定即可，<strong>角色定义和 raw item schema 一个字都不用改</strong>。
+  </div>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.6rem;">
+    采集器不是固定的——它是<strong>插件清单</strong>，由 registry 决定启用谁。下表<strong>能力 / 采什么</strong>列是稳定契约（host 无关）；
+    右侧两列是<strong>同一能力在不同 host 下各自的适配器</strong>——直观展示"换 host 只换这两列、能力列不动"。
+    <span class="tag mid">Claude Code 已验证</span> <span class="tag prog">Codex 为前瞻规划，未验证</span>
+  </p>
+  <table>
+    <tr>
+      <th>采集器（能力）</th><th>采什么</th>
+      <th>适配器 · Claude Code <span class="tag ok" style="font-size:0.66rem;">当前</span></th>
+      <th>适配器 · Codex <span class="tag prog" style="font-size:0.66rem;">规划</span></th>
+      <th>可用性</th>
+    </tr>
+    <tr><td><code>slack</code></td><td>DM / @我 / 追踪人活动 / 我的 outbound。<strong>最重，M2 先打通</strong></td>
+        <td>MCP <code>slack</code></td><td>Codex connector / Slack Web API（token）</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td><code>jira</code></td><td>assign 给我 / 待我转状态 / stale 超 N 天</td>
+        <td>MCP <code>atlassian</code></td><td>Jira REST API（token）</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td><code>github</code></td><td>待我 review 的 PR / 被 @ 的 issue</td>
+        <td>MCP <code>github</code></td><td><code>gh</code> CLI / GitHub REST API</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td><code>calendar</code></td><td>今日日程 / 会议 / 会议纪要</td>
+        <td>本地 CLI（如 <code>gws</code>）</td><td>同 CLI（host 无关）/ Google Calendar API</td><td><span class="tag todo">❌</span></td></tr>
+    <tr><td><code>gmail</code></td><td>未读 / 待回邮件</td>
+        <td>Gmail MCP · 只读 scope（ArtyMcLabin fork，待接）</td><td>Gmail API（OAuth token）</td><td><span class="tag prog">🟡</span></td></tr>
+    <tr><td><code>feishu</code>（飞书）</td><td>消息 / 待办 / 文档 @</td>
+        <td>短期 cso1z/Feishu-MCP（仅 task）→ 长期自研只读飞书 MCP（全三层）</td><td>飞书开放平台 API（app token）</td><td><span class="tag prog">🟡</span></td></tr>
+    <tr><td>…更多</td><td>只在 owner 真正使用时新增——"grow by being used"</td>
+        <td>—</td><td>—</td><td><span class="tag defer">⏸</span></td></tr>
+  </table>
+  <div class="note" style="font-size:0.84rem;">
+    <strong>读这张表的方式：</strong> 横看一行 = 同一个能力（如 <code>slack</code> 采"DM / @我"），
+    在 Claude Code 下走 MCP，在 Codex 下走 connector / Web API——<strong>左两列永远不变，右两列随 host 替换</strong>。
+    这就是"能力 / 适配器分离"的具体长相。注意 <code>calendar</code> 这类<strong>本地 CLI</strong> 适配器其实<strong>跨 host 通用</strong>
+    （CLI 不依赖某个 agent runtime），所以两个 host 那格可以是同一个。
+  </div>
+  <div class="note warn">
+    <strong>正因为采集器会很多、host 还会变，三件事是地基：</strong>
+    ① <strong>M1 锁统一 raw item schema</strong>——无论来自 MCP / CLI / Codex 连接器，产出形状必须一致；
+    ② <strong>能力与适配器分离</strong>——角色规格只说"采什么"，不说"怎么调"；
+    ③ <strong>B 绝不 hardcode 来源数</strong>——加采集器 = registry 加一项 + 写一份能力规格 + 该 host 的适配器绑定，不动 B / C。
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>2. 现状对照</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="margin-bottom:1rem; font-size:0.88rem; color:var(--muted);">
+    图例：
+    <span class="tag ok">✅ 完成</span>
+    <span class="tag prog">🟡 部分</span>
+    <span class="tag todo">❌ 待写</span>
+    <span class="tag defer">⏸ 延后</span>
+  </p>
+  <table>
+    <tr><th>制品</th><th>状态</th><th>说明</th></tr>
+    <tr><td>角色定义 <code>agent.md</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>triage 方法 + 分级标准 + 读写边界（只读）+ 7 步 workflow。本会话已写。</td></tr>
+    <tr><td>registry <code>config.md</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>渠道 schema + 占位示例；真实 ID 指向 repo 外部 <code>~/.agent_worlds/secretary/registry.yaml</code>。</td></tr>
+    <tr><td>产出模板 <code>digest_template.md</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>digest 的 section 结构（Action Items / Waiting On Me / 各渠道 / Coverage / Summary）。</td></tr>
+    <tr><td>本状态看板 <code>status.html</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>就是这份文件。</td></tr>
+    <tr><td>数据契约 <code>item_schema.md</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>raw item（A→B）+ topic（B→C）两个 schema。M1 定稿。</td></tr>
+    <tr><td><code>collectors/</code> 目录 + README</td><td><span class="tag ok">✅ 完成</span></td>
+        <td>采集器目录约定：每来源一个 spec，统一产出 raw item 契约。</td></tr>
+    <tr><td><code>A.slack</code> 采集器规格</td><td><span class="tag ok">✅ 完成</span></td>
+        <td><code>collectors/slack.md</code>：4+1 查询层、时间窗口、字段映射、去重键、适配器绑定。</td></tr>
+    <tr><td><code>A.jira</code> / <code>A.github</code> 规格</td><td><span class="tag todo">❌ 待写</span></td>
+        <td>M3：当前 host 已有适配器，零接入成本。靶子已锁。</td></tr>
+    <tr><td><code>B</code> 分诊规格 <code>triage.md</code></td><td><span class="tag ok">✅ 完成</span></td>
+        <td>6 步：合并去重 / 聚类 / tag 阶梯 / 分组 / 分级 / 按 relation 路由。tag 用 channel&gt;keyword&gt;person 优先级。</td></tr>
+    <tr><td><code>D</code> workflow yaml</td><td><span class="tag ok">✅ 完成</span></td>
+        <td><code>workflows/daily_digest.yaml</code>：collect(foreach)→triage→render + 顶层 <code>trigger</code>（schedule/on_demand）。</td></tr>
+    <tr><td><code>E</code> HTML dashboard</td><td><span class="tag defer">⏸ 延后</span></td>
+        <td>吃 md 产 html 的渲染脚本（像 generate_concept.py）。</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. 待办清单（里程碑 · 之后一步步来）</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:1rem;">
+    顺序原则：<strong>先锁数据形状（M1），再走一个垂直切片（M2：Slack 一条龙），</strong>
+    验证整条数据链后，再横向补齐其余来源（M3）、最后整合（M4）。
+  </p>
+
+  <h3><span class="ms">M0 — 基础（本会话已完成）</span> <span class="tag ok">✅ DONE</span></h3>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项</th><th>状态</th></tr>
+    <tr><td>0.1</td><td>角色定义 <code>agent.md</code>（含只读边界）</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>0.2</td><td>registry schema <code>config.md</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>0.3</td><td>产出模板 <code>digest_template.md</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>0.4</td><td><code>company.yaml</code> secretary → active + 重新生成 concept.svg</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>0.5</td><td>本状态看板 <code>status.html</code></td><td><span class="tag ok">✅</span></td></tr>
+  </table>
+
+  <h3><span class="ms">M1 — 锁数据形状</span> <span class="tag ok">✅ DONE</span></h3>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项</th><th>状态</th></tr>
+    <tr><td>1.1</td><td>定义 <strong>raw item schema</strong>（A→B 契约）：<code>source / context / type / relation / title / who / when / link / raw_text / dedup_key</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>1.2</td><td>定义 <strong>triage 输出 schema</strong>（topic 对象）：<code>title / summary / priority / group / tag / participants / items[]</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>1.3</td><td>把两个 schema 落进角色目录（<code>item_schema.md</code>）</td><td><span class="tag ok">✅</span></td></tr>
+  </table>
+  <div class="note">这一步一锁，三个采集器就有统一靶子，B 也有稳定输入。这是"先保证数据"的核心。</div>
+
+  <h3><span class="ms">M2 — Slack 垂直切片（第一条龙）</span> <span class="tag prog">🟡 进行中</span></h3>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项</th><th>状态</th></tr>
+    <tr><td>2.1</td><td><code>A.slack</code> 采集器规格：查询分层（DM/@我/追踪人/outbound + thread 展开）、时间窗口、字段映射（含 relation）、按 ts 去重、适配器绑定 → <code>collectors/slack.md</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>2.2</td><td><code>B</code> 分诊规格：合并去重 / 聚类成 topic / tag 优先级阶梯（channel&gt;keyword&gt;person）/ 分组 / 分级 / 按 relation 路由 → <code>triage.md</code></td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>2.3</td><td><code>C</code> 真跑一遍：接 MCP slack 扫真实数据 → B 分诊 → 用模板渲染 <code>outbox/{date}-digest.md</code>（不用 mock，直接通电验证整条链）</td><td><span class="tag todo">❌</span></td></tr>
+  </table>
+  <div class="note warn">Slack 是最重的收件箱，先打通它，验证采集→分诊→md 整条数据链。<strong>2.3 需要真实 registry（外部文件）+ MCP slack 已连。</strong></div>
+
+  <h3><span class="ms">M3 — 横向补齐采集器（按可用性分批）</span> <span class="tag todo">❌ TODO</span></h3>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.5rem;">
+    先补<strong>当前 host 已有适配器</strong>的（jira/github，零接入成本），再补需新建适配器的（calendar/gmail/飞书）。详见 §1.3。
+    每个采集器先写 host 无关的<strong>能力规格</strong>，再挂当前 host 的适配器绑定。
+  </p>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项（能力）</th><th>当前适配器</th><th>状态</th></tr>
+    <tr><td>3.1</td><td><code>A.jira</code>：assign 给我 / 待我转状态 / stale 超 N 天 → HIGH</td><td>已有 ✅</td><td><span class="tag todo">❌</span></td></tr>
+    <tr><td>3.2</td><td><code>A.github</code>：待我 review 的 PR / 被 @ 的 issue / open &gt;1 天 → HIGH</td><td>已有 ✅</td><td><span class="tag todo">❌</span></td></tr>
+    <tr><td>3.3</td><td>验证 <strong>B 对"多来源"不 hardcode</strong>（加来源不改 B / C）</td><td>—</td><td><span class="tag todo">❌</span></td></tr>
+    <tr><td>3.4</td><td><code>A.calendar</code>：今日日程 / 会议 / 会议纪要</td><td>待建</td><td><span class="tag todo">❌</span></td></tr>
+    <tr><td>3.5</td><td><code>A.gmail</code>：未读 / 待回邮件 → <code>collectors/gmail.md</code>（规格已写，含 bulk 降级 + 待回判定）</td><td>Gmail MCP（只读 scope）已选型，待接</td><td><span class="tag prog">🟡 规格完成</span></td></tr>
+    <tr><td>3.6</td><td><code>A.feishu</code>（飞书）：消息 / 待办 / 文档 @ → <code>collectors/feishu.md</code>（三 surface 分层 + task 默认 action_required）</td><td>短期：cso1z/Feishu-MCP 仅 task；长期：自研只读飞书 MCP 补齐三层</td><td><span class="tag prog">🟡 规格完成</span></td></tr>
+  </table>
+
+  <h3><span class="ms">M4 — 流程整合</span> <span class="tag ok">✅ DONE</span></h3>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项</th><th>状态</th></tr>
+    <tr><td>4.1</td><td><code>workflows/daily_digest.yaml</code>：把 A→B→C 串成声明式步骤（collect <code>foreach</code> 开放来源 → triage barrier → render）</td><td><span class="tag ok">✅</span></td></tr>
+    <tr><td>4.2</td><td>trigger 机制：给 workflow schema 加<strong>顶层 <code>trigger</code> 字段</strong>（schedule cron + on_demand）。这是仓库首个时钟驱动 workflow；无 <code>trigger</code> 的照旧按需运行，字段可选向后兼容。</td><td><span class="tag ok">✅</span></td></tr>
+  </table>
+  <div class="note">两个设计点：① collect 用 <code>foreach: registry.enabled_sources</code> 不 hardcode 来源数，缺适配器的来源不中断、记 "did not run"；② 无 release/gate——digest 是只读产出，后续动作归 owner。</div>
+
+  <h3><span class="ms">M5 — HTML dashboard（延后）</span> <span class="tag defer">⏸ DEFER</span></h3>
+  <table>
+    <tr><th style="width:6%;">#</th><th>事项</th><th>状态</th></tr>
+    <tr><td>5.1</td><td>渲染脚本：吃 <code>{date}-digest.md</code> 产 <code>{date}-digest.html</code>（像 generate_concept.py）</td><td><span class="tag defer">⏸</span></td></tr>
+    <tr><td>5.2</td><td>dashboard 视觉对标（深色 / 颜色分级 / 可折叠分区 / tag chips）</td><td><span class="tag defer">⏸</span></td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2>4. 数据形状预览（M1 要锁的两个 schema）</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <p style="font-size:0.88rem; color:var(--muted); margin-bottom:0.8rem;">
+    以下是 M1 的<strong>草案方向</strong>，正式定稿时落进角色目录。先贴出来对齐认知。
+  </p>
+  <div class="domain-grid">
+    <div class="entity">
+      <div class="entity-name">raw item（A → B 契约）</div>
+      <div class="entity-desc">一条采集到的东西，所有采集器统一产出这个形状（已定稿 → <code>item_schema.md</code>）</div>
+      <ul class="entity-fields">
+        <li><code>source</code> 哪个采集器：slack / jira / github</li>
+        <li><code>context</code> 定位符（#channel / repo / project-key），B 查 registry 得 group</li>
+        <li><code>type</code> 对象是什么（给人看）：dm / mention / pr_review …</li>
+        <li><code>relation</code> 对我意味着什么（给 B 分诊）：action_required / waiting_on_me / fyi</li>
+        <li><code>title</code> 一句话标题</li>
+        <li><code>who</code> 发起人（可解析 handle，便于匹配追踪人）</li>
+        <li><code>when</code> 时间戳</li>
+        <li><code>link</code> 回跳链接</li>
+        <li><code>raw_text</code> 原文（供 B 聚类）</li>
+        <li><code>dedup_key</code> 去重键（如 message ts）</li>
+      </ul>
+    </div>
+    <div class="entity">
+      <div class="entity-name">topic（B → C 产出）</div>
+      <div class="entity-desc">分诊后的一个聚合主题，digest 的最小展示单元</div>
+      <ul class="entity-fields">
+        <li><code>title</code> 主题标题</li>
+        <li><code>summary</code> 1-2 行摘要</li>
+        <li><code>priority</code> HIGH / MED / LOW</li>
+        <li><code>group</code> 分组（来自 registry）</li>
+        <li><code>tag</code> 项目标签（可选）</li>
+        <li><code>participants</code> 参与人</li>
+        <li><code>items[]</code> 关联的 raw items</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. 不变的边界（设计约束，别漂移）</h2>
+<!-- ============================================================ -->
+<div class="card">
+  <table>
+    <tr><th style="width:30%;">约束</th><th>为什么</th></tr>
+    <tr><td><strong>只读</strong>，不替我发消息/回复/建 ticket</td><td>信任边界。widen 之前必须显式决定。</td></tr>
+    <tr><td>来源是 <strong>config，不是 prompt</strong></td><td>符合 CLAUDE.md "process is data" 铁律；真实 ID 不进公开 repo。</td></tr>
+    <tr><td><strong>host 无关</strong>：只声明能力，不写 host 特定调用</td><td>角色不焊死在 Claude Code/MCP 上。换到 Codex 等 host 只换适配器，角色 + schema 不变。</td></tr>
+    <tr><td>产出是 <strong>带日期 artifact</strong>，不是常驻服务</td><td>守住仓库 "no service, no daemon"。</td></tr>
+    <tr><td><strong>triage 重于 collection</strong></td><td>秘书的价值在聚类+分级，不在收集。</td></tr>
+    <tr><td><strong>绝不静默丢弃 / 静默跳过</strong></td><td>Coverage 段必写："无结果" vs "没跑" 必须可区分。</td></tr>
+    <tr><td>A/B 是<strong>给 LLM 执行的规格（md）</strong>，不是代码</td><td>仓库还不是 runtime；唯一真代码是将来的 E 渲染脚本。</td></tr>
+  </table>
+</div>
+
+<p style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:2rem;">
+  secretary 角色建设看板 · 本会话整理 · 格式参考 agent_worlds_v2_overview.html
+</p>
+
+</body>
+</html>

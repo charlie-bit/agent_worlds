@@ -3,67 +3,96 @@
 [English](README.md) · **中文**
 
 <p align="center">
-  <img src="diagrams/concept.svg" alt="agent_worlds — 服务于我的两个 agent 世界" width="860">
+  <img src="diagrams/concept.svg" alt="agent_worlds — 一个人的 agent 公司" width="900">
 </p>
 
-我自己的一套 AI agent 集合——把反复出现的工作流和创造流,
-沉淀成随时可复用的 agent。
+**一个人的 agent 公司**——从粗糙的想法,到发布的功能。
 
-每个 agent 都归属于两大世界之一:
+`agent_worlds` 不是一堆松散的 agent,而是像一家公司一样组织起来:
 
-| | **assistants（工作小助手）** | **builders（业务/项目 agent）** |
-|---|---|---|
-| **目的** | 扛我已有的活 | 造我想做的东西 |
-| **面向** | 现有工作 & 日常负荷 | 新项目 & 想法 |
-| **做什么** | 处理杂事、收集未处理的事情 | 设计、拆解项目 |
-| **一句话** | *减负* | *造未来* |
+```
+公司 → 部门 → 角色 → agent
+```
 
-- **assistants** —— 工作小助手。盯着我的各类收件箱,收集需要关注的事情
-  (@、DM、待办),把例行杂事从我手上接走。
-- **builders** —— 项目 agent。把粗糙的想法变成可落地的方案:
-  产品规范、游戏策划,以及我接下来决定要做的任何东西。
+组织结构在 [`company.yaml`](company.yaml) 里声明一次。公司如何把想法变成发布,
+是**数据,而不是 prompt**——它以声明式步骤的形式住在 [`workflows/`](workflows/) 里。
+
+## 核心想法
+
+大多数 agent 项目是一张扁平的 agent 清单。真正缺的不是更多 agent,而是**组织**:
+谁做什么、按什么顺序、把什么交给谁。所以这个仓库把自己建模成一家公司:
+
+- **部门(department)** 按职能聚合角色(`product`、`engineering`、`quality`、`support`)。
+- **角色(role)** 是具体的岗位(`pm`、`architect`、`qa`…)。V1 里一个角色就是一个 agent。
+- **工作流(workflow)** 把角色串成流水线。角色之间通过**产物文件**交接——
+  文件系统就是消息总线。没有服务,没有常驻进程。
+
+> **流程即数据。** 要改变公司怎么运作,就改 workflow YAML——而不是某个藏起来的 prompt。
 
 ## 目录结构
 
 ```
 agent_worlds/
-├── agents/
-│   ├── assistants/                工作小助手
-│   │   └── secretary-agent/        收件箱 & 待办收集器
-│   └── builders/                  项目 agent
-│       ├── pm-agent/               粗糙想法 → 规范包
-│       └── game-agent/             游戏设计 & 玩法
-└── diagrams/                      共享图表资源 + 生成脚本
+├── company.yaml          组织:部门 → 角色(单一事实来源)
+├── CLAUDE.md             如何在本仓库工作(规则)
+├── workflows/            公司如何跑一个任务(流程即数据)
+│   └── software_feature.yaml
+├── departments/
+│   ├── product/          pm · researcher
+│   ├── engineering/      architect · backend · web · game
+│   ├── quality/          qa
+│   └── support/          secretary
+└── diagrams/             生成的组织图 + 流水线图(永不手改)
 ```
 
-## Agents
+每个角色位于 `departments/<部门>/<角色>/`,含一个 `agent.md`(角色本体);
+方法论文件可平铺,文件多时再归进 `playbook/`(它的方法论)。
 
-### assistants（工作小助手）
+## 默认工作流:`software_feature`
 
-| Agent | 一句话 |
-|-------|--------|
-| [secretary-agent](agents/assistants/secretary-agent/) | 盯着我的收件箱,收集未处理的事情,不让任何东西漏掉。 |
+```
+调研 → 需求确认 → 架构设计 → 构建(backend/web/game) → 测试 → 发布
+ pm·researcher   pm★        architect        engineering        qa    pm★
+```
 
-### builders（业务/项目 agent）
+★ = owner 确认点(`gate`)。每一步 `consumes`(消费)上游产物、`produces`(产出)
+下游产物——例如 `pm` 写出 `01_mvp_spec.md`,`architect` 读它。
+详见 [`workflows/software_feature.yaml`](workflows/software_feature.yaml)。
 
-| Agent | 一句话 |
-|-------|--------|
-| [pm-agent](agents/builders/pm-agent/) | 把粗糙的产品想法变成小而可落地的规范包。 |
-| [game-agent](agents/builders/game-agent/) | 把游戏想法变成设计文档和核心玩法。 |
+## 角色
+
+| 部门 | 角色 | 状态 | 一句话 |
+|---|---|---|---|
+| product | [pm](departments/product/pm/agent.md) | active | 把粗糙的产品想法变成小而可落地的规范包。 |
+| product | [researcher](departments/product/researcher/agent.md) | stub | 在锁定范围前调研问题空间。 |
+| engineering | [architect](departments/engineering/architect/agent.md) | stub | 把锁定的 MVP 规范变成系统设计与 ADR。 |
+| engineering | [backend](departments/engineering/backend/agent.md) | stub | 构建服务端逻辑、API 与数据。 |
+| engineering | [web](departments/engineering/web/agent.md) | stub | 构建 Web 客户端。 |
+| engineering | [game](departments/engineering/game/agent.md) | stub | 把游戏想法变成设计文档和核心玩法。 |
+| quality | [qa](departments/quality/qa/agent.md) | stub | 对照验收标准校验交付物。 |
+| support | [secretary](departments/support/secretary/agent.md) | stub | 盯着我的收件箱,收集未处理的事情。 |
+
+> **stub 是有意的。** stub 角色的存在是为了让工作流能端到端跑通;
+> 等真有任务需要时再充实它——不要提前。`pm` 是一个完整角色的参照样板。
 
 ## 基调约定
 
-这是每个 agent 都要遵守的基本规矩——让集合越长越大也保持一致。
+每次新增都遵守的基本规矩(完整版见 [`CLAUDE.md`](CLAUDE.md)):
 
-1. **目录名**:简洁、kebab-case、以 `-agent` 结尾——如 `pm-agent`、`game-agent`、`secretary-agent`。
-2. **README 第一句就是简介**:在 H1 标题正下方写一句话描述这个 agent。务必简短。这句话是唯一事实来源——概念图会自动读取它。需要细节就写进 README 更下方,而不是这一句。
-3. **每个 agent 两件套**:`README.md`(就是这个 agent,人和 LLM 都读它)+ 一个 `<agent-名>-system/` 目录(它赖以运作的方法论,如 `pm-system/`、`game-system/`、`secretary-system/`——按 agent 命名,一眼看出归属)。
-4. **README 双语**:每个 agent 都有 `README.md`(英文)和 `README.zh.md`(中文),各自第一行带语言切换链接。
-5. **图里文字只用英文**;图是生成的,不是手画的——运行 `python3 diagrams/generate_concept.py`,它扫描 `agents/` 并从英文 `README.md` 拉取简介。永远不要手动改图。
+1. **角色目录名 = 角色名**,kebab-case、无后缀(`pm/`,而不是 `pm-agent/`)。部门提供命名空间。
+2. **`agent.md` 以角色头开头**(`> **role:** … · **department:** …`)加一句话简介。
+3. **`company.yaml` 是组织的单一事实来源**。概念图读它——没有别处定义部门/角色。
+4. **图是生成的,从不手画**——改完 `company.yaml` 后跑 `python3 diagrams/generate_concept.py`。
+5. **双语只存在于顶层这里**;角色文件用英文(主要给 LLM 读)。
 
-## 新增一个 Agent
+## 新增
 
-1. 先定世界归属:**assistant**(帮已有的工作)还是 **builder**(创造新东西)。
-2. 建目录 `agents/<world>/<name>-agent/`。
-3. 加 `README.md` + `README.zh.md`(简洁 H1 + 第一句正文写一句话简介),以及一个 `<name>-system/` 目录(`<name>` 是去掉 `-agent` 后缀的部分——如 `pm-agent` → `pm-system/`)。`/new-agent` skill 会自动帮你做完这些。
-4. 跑 `python3 diagrams/generate_concept.py` 刷新概念图,并在上方表格加一行。
+- **新角色**:建 `departments/<部门>/<角色>/agent.md`,在 `company.yaml` 对应部门下加一行,重新生成图。
+- **新部门**:在 `company.yaml` 里加它,建目录,至少加 1 个角色。
+- **新工作流**:加 `workflows/<名字>.yaml`,尽量复用已有角色。
+
+## 接下来往哪走
+
+V1 刻意保持轻:文件 + 一个 workflow,没有 runtime。公司靠**被使用**而成长,
+而不是被过度设计。一个薄薄的 orchestrator——真正去**执行** workflow(把每一步派给
+对应角色、在 owner 确认点停下)——是自然的下一步,但只在结构配得上它之后才做。

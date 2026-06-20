@@ -1,0 +1,52 @@
+# software_feature — the company's default pipeline for building a feature.
+#
+# The flow is DATA, not a hardcoded prompt. To change how the company works,
+# edit the steps below — do not bury the process in an agent's system prompt.
+#
+# How to read a step:
+#   role      which role (see company.yaml) does the work
+#   consumes  artifact files this step needs as input (produced upstream)
+#   produces  artifact files this step writes (the hand-off to downstream)
+#   gate      a human checkpoint — the runner stops here until the owner confirms
+#   parallel  the listed roles run on the same step concurrently
+#
+# Artifacts are plain files in the run's workspace. The "message bus" is the
+# filesystem: a step starts when its `consumes` files exist; it ends when its
+# `produces` files are written. No services, no daemon.
+
+name: software_feature
+description: From a rough idea to a released feature, run by the agent company.
+
+steps:
+  - id: research
+    role: researcher
+    produces: [research_notes.md]
+
+  - id: requirements
+    role: pm
+    consumes: [research_notes.md]
+    produces:
+      - 00_project_brief.md
+      - 01_mvp_spec.md
+      - 02_tasks_acceptance.md
+    gate: owner_confirm        # lock scope before anyone builds
+
+  - id: architecture
+    role: architect
+    consumes: [01_mvp_spec.md]
+    produces: [architecture.md, ADR.md]
+
+  - id: build
+    parallel: [backend, web, game]   # only the roles a given feature needs
+    consumes: [02_tasks_acceptance.md, architecture.md]
+    produces: [implementation.md]     # per-role build notes + code in workspace
+
+  - id: test
+    role: qa
+    consumes: [02_tasks_acceptance.md, implementation.md]
+    produces: [test_report.md]
+
+  - id: release
+    role: pm
+    consumes: [test_report.md]
+    gate: owner_confirm        # owner makes the final ship call

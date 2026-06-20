@@ -1,87 +1,71 @@
 #!/usr/bin/env python3
-# agent_worlds concept hero diagram — Flat Icon style (fireworks-tech-graph style 1).
-# "Me" at the center, flanked by two worlds (assistants / builders) that take my
-# input and return value. Output: SVG (English only, no CJK).
+# agent_worlds concept hero diagram — the company org chart.
+# Renders: company -> departments -> roles, in the warm Claude palette.
 #
-# ── ZERO MAINTENANCE ─────────────────────────────────────────────────
-#   This script DISCOVERS agents by scanning  agents/<world>/<agent>/  and
-#   pulls each blurb straight from that agent's README.md. To add an agent
-#   to the diagram, just create its directory + README.md, then run:
+# ── SINGLE SOURCE OF TRUTH ───────────────────────────────────────────
+#   This script reads the org structure from  company.yaml  (NOT the agent
+#   READMEs). To change the diagram, edit company.yaml, then run:
 #       python3 generate_concept.py
-#   Nothing in this file needs editing.
-#
-#   Per agent it reads, from that agent's README.md:
-#     • display name = the H1 title            (# Xxx)
-#     • blurb        = the first prose line     (the one-line summary that
-#                      every agent README puts right under its title)
-#   Convention: keep the H1 short and put a one-sentence summary on the
-#   first non-empty prose line. That line IS what the diagram shows.
+#   Stub roles (status: stub) render muted + dashed; active roles solid.
+#   No third-party deps — a tiny purpose-built parser reads company.yaml.
 # ─────────────────────────────────────────────────────────────────────
-import os, re, html, glob
+import os, html
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-AGENTS = os.path.join(REPO, "agents")
-
-# Palette — Claude Official (warm cream), matching diagrams/pipeline.svg
-FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif"
-BG = "#f8f6f3"                          # warm cream canvas
-BLUE, GREEN = "#3f6896", "#4f8a76"      # give (I→agents) / return (agents→me)
-INK, SUB = "#1a1a1a", "#6a6a6a"
-HEAD = "#1a1a1a"                         # panel header text
-PANEL_FILL, PANEL_STROKE = "#efe9e1", "#d8d0c6"   # soft warm panel
-BOX_FILL, BOX_STROKE = "#ffffff", "#8a8278"       # agent card on cream
-AVATAR = "#4a4a4a"
-
-# geometry
-W = 1060
-CX = 530
-PANEL_W = 340
-LPX, RPX = 50, W - 50 - PANEL_W
-PANEL_TOP = 130
-HEADER_H = 95
-NAME_H, LINE_H = 30, 18                 # box: name row + blurb lines
-BOX_PAD_V, BOX_GAP = 16, 22
-PAD_TOP, PAD_BOT = 30, 30
-BLURB_MAX_CHARS = 34                    # per blurb line before wrapping
-BLURB_MAX_LINES = 2
+COMPANY = os.path.join(REPO, "company.yaml")
 
 
 def esc(s):
     return html.escape(str(s), quote=True)
 
 
-# ---- README parsing ----------------------------------------------------
-def parse_readme(path):
-    """Return (display_name, blurb_lines) pulled from a README.md.
+# ---- minimal company.yaml parser (indentation-based, fixed schema) -----
+def load_company(path):
+    """Parse company.yaml into {company, tagline, departments:[{name,purpose,
+    roles:[{name,summary,status}]}]}. Tolerant of our own file's shape only."""
+    company = {"company": "agent_worlds", "tagline": "", "departments": []}
+    cur_dept = cur_role = None
+    section = None  # None | 'departments'
 
-    Prefers explicit HTML-comment fields; falls back to H1 + first prose.
-    """
-    try:
-        lines = open(path, encoding="utf-8").read().splitlines()
-    except OSError:
-        return None, []
+    def indent(s):
+        return len(s) - len(s.lstrip(" "))
 
-    name, prose = None, None
-    for ln in lines:
-        s = ln.strip()
-        if not s:
+    for raw in open(path, encoding="utf-8").read().splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
             continue
-        if s.startswith("# ") and name is None:        # H1 title
-            name = s[2:].strip()
-            continue
-        if s.startswith((">", "<", "#", "![", "|", "-", "*", "`")):
-            continue                                    # quote / html / heading / list / img
-        if prose is None:
-            prose = s                                   # first real prose line
-            break
+        ind = indent(raw)
+        line = raw.strip()
+        key, _, val = line.partition(":")
+        key, val = key.strip(), val.strip().strip('"').strip("'")
 
-    if prose:
-        sentence = re.split(r"(?<=[.!?])\s", prose)[0].strip()
-        blurb_lines = wrap(sentence, BLURB_MAX_CHARS, BLURB_MAX_LINES)
-    else:
-        blurb_lines = []
-    return name, blurb_lines
+        if ind == 0:
+            if key == "company":
+                company["company"] = val
+            elif key == "tagline":
+                company["tagline"] = val
+            elif key == "departments":
+                section = "departments"
+            else:
+                section = None
+        elif section == "departments" and ind == 2:           # department name
+            cur_dept = {"name": key, "purpose": "", "roles": []}
+            company["departments"].append(cur_dept)
+            cur_role = None
+        elif section == "departments" and ind == 4 and cur_dept is not None:
+            if key == "purpose":
+                cur_dept["purpose"] = val
+            elif key == "roles":
+                pass
+        elif section == "departments" and ind == 6 and cur_dept is not None:  # role name
+            cur_role = {"name": key, "summary": "", "status": "active"}
+            cur_dept["roles"].append(cur_role)
+        elif section == "departments" and ind == 8 and cur_role is not None:
+            if key == "summary":
+                cur_role["summary"] = val
+            elif key == "status":
+                cur_role["status"] = val
+    return company
 
 
 def wrap(text, max_chars, max_lines):
@@ -101,117 +85,135 @@ def wrap(text, max_chars, max_lines):
     return lines
 
 
-def discover(world):
-    """Scan agents/<world>/*/README.md → list of (name, blurb_lines)."""
-    out = []
-    for readme in sorted(glob.glob(os.path.join(AGENTS, world, "*", "README.md"))):
-        name, blurb = parse_readme(readme)
-        if name:
-            out.append((name, blurb))
-    return out
+# ---- palette (Claude Official warm cream, matches pipeline.svg) --------
+FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei','SimHei',sans-serif"
+MONO = "'SF Mono','Fira Code','Cascadia Code','Courier New',monospace"
+BG = "#f8f6f3"
+INK, SUB, HEAD = "#1a1a1a", "#6a6a6a", "#1a1a1a"
+PANEL_FILL, PANEL_STROKE = "#efe9e1", "#d8d0c6"
+ACTIVE_FILL, ACTIVE_STROKE = "#9dd4c7", "#4a4a4a"   # active role (teal, like proc node)
+STUB_FILL, STUB_STROKE = "#ffffff", "#b7afa1"   # stub role (muted)
+COMPANY_FILL, COMPANY_STROKE = "#f4e4c1", "#4a4a4a"  # company crown (warm gold)
+LINE = "#9a9a9a"
+
+# ---- geometry ----------------------------------------------------------
+W = 1100
+MARGIN = 40
+GUTTER = 20
+TOP = 40
+COMPANY_H = 64
+DEPT_TOP = TOP + COMPANY_H + 54     # room for connector
+DEPT_HEAD_H = 64
+ROLE_H_NAME = 26
+ROLE_LINE = 15
+ROLE_PAD_V = 12
+ROLE_GAP = 12
+DEPT_PAD = 16
+ROLE_BLURB_CHARS = 26
+ROLE_BLURB_LINES = 2
 
 
-ASSISTANTS = discover("assistants")
-BUILDERS = discover("builders")
+def role_h(blurb):
+    return ROLE_PAD_V + ROLE_H_NAME + max(len(blurb), 1) * ROLE_LINE + ROLE_PAD_V
 
 
-# ---- layout ------------------------------------------------------------
-def box_height(blurb_lines):
-    return BOX_PAD_V + NAME_H + max(len(blurb_lines), 1) * LINE_H + BOX_PAD_V
-
-
-def panel_height(items):
-    h = PAD_TOP + HEADER_H + PAD_BOT
-    h += sum(box_height(b) for _, b in items)
-    h += max(len(items) - 1, 0) * BOX_GAP
+def dept_h(roles):
+    h = DEPT_PAD + DEPT_HEAD_H
+    h += sum(role_h(r["_blurb"]) for r in roles)
+    h += max(len(roles) - 1, 0) * ROLE_GAP
+    h += DEPT_PAD
     return h
 
 
-def avatar(cx, by, scale=1.0):
-    r, sw = 18 * scale, 32 * scale
-    hy = by - 52 * scale
-    return [
-        '  <circle cx="%g" cy="%g" r="%g" fill="%s"/>' % (cx, hy, r, AVATAR),
-        '  <path d="M %g,%g Q %g,%g %g,%g Q %g,%g %g,%g Z" fill="%s"/>' % (
-            cx - sw, by, cx - sw, by - 40 * scale, cx, by - 40 * scale,
-            cx + sw, by - 40 * scale, cx + sw, by, AVATAR),
-    ]
+def build(company):
+    depts = company["departments"]
+    n = len(depts)
+    avail = W - 2 * MARGIN - (n - 1) * GUTTER
+    col_w = avail // n
+
+    # precompute blurbs + per-dept heights
+    for d in depts:
+        for r in d["roles"]:
+            r["_blurb"] = wrap(r["summary"], ROLE_BLURB_CHARS, ROLE_BLURB_LINES)
+    body_h = max((dept_h(d["roles"]) for d in depts), default=120)
+    H = DEPT_TOP + body_h + 50
+
+    L = []
+    L.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">' % (W, H, W, H))
+    L.append('  <style>text { font-family: %s; } .mono { font-family: %s; }</style>' % (FONT, MONO))
+    L.append('  <defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#00000014"/></filter></defs>')
+    L.append('  <rect width="%d" height="%d" fill="%s"/>' % (W, H, BG))
+
+    # ---- company crown (centered top) ----
+    cw, cx = 360, W // 2
+    cxx = cx - cw // 2
+    L.append('  <rect x="%d" y="%d" width="%d" height="%d" rx="12" fill="%s" stroke="%s" stroke-width="2.5" filter="url(#sh)"/>' % (
+        cxx, TOP, cw, COMPANY_H, COMPANY_FILL, COMPANY_STROKE))
+    L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="20" font-weight="700">%s</text>' % (
+        cx, TOP + 27, INK, esc(company["company"])))
+    L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="11.5">%s</text>' % (
+        cx, TOP + 47, SUB, esc(company["tagline"])))
+
+    # ---- department columns ----
+    col_x = []
+    x = MARGIN
+    for _ in depts:
+        col_x.append(x)
+        x += col_w + GUTTER
+
+    # connectors company -> each department head
+    bus_y = TOP + COMPANY_H + 26
+    L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.6"/>' % (cx, TOP + COMPANY_H, cx, bus_y, LINE))
+    if n > 1:
+        L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.6"/>' % (
+            col_x[0] + col_w // 2, bus_y, col_x[-1] + col_w // 2, bus_y, LINE))
+    for cxp in col_x:
+        mid = cxp + col_w // 2
+        L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.6"/>' % (mid, bus_y, mid, DEPT_TOP, LINE))
+
+    for d, cxp in zip(depts, col_x):
+        ph = dept_h(d["roles"])
+        L.append('  <rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="%s" stroke="%s" stroke-width="1.5"/>' % (
+            cxp, DEPT_TOP, col_w, ph, PANEL_FILL, PANEL_STROKE))
+        L.append('  <text x="%d" y="%d" fill="%s" font-size="16" font-weight="700">%s</text>' % (
+            cxp + DEPT_PAD, DEPT_TOP + 30, HEAD, esc(d["name"])))
+        for i, ln in enumerate(wrap(d["purpose"], int(col_w / 6.4), 2)):
+            L.append('  <text x="%d" y="%d" fill="%s" font-size="11">%s</text>' % (
+                cxp + DEPT_PAD, DEPT_TOP + 48 + i * 14, SUB, esc(ln)))
+
+        by = DEPT_TOP + DEPT_PAD + DEPT_HEAD_H
+        for r in d["roles"]:
+            rh = role_h(r["_blurb"])
+            bx, bw = cxp + DEPT_PAD, col_w - 2 * DEPT_PAD
+            stub = r["status"] == "stub"
+            fill = STUB_FILL if stub else ACTIVE_FILL
+            stroke = STUB_STROKE if stub else ACTIVE_STROKE
+            dash = ' stroke-dasharray="5,3"' if stub else ''
+            L.append('  <rect x="%d" y="%d" width="%d" height="%d" rx="8" fill="%s" stroke="%s" stroke-width="1.5"%s/>' % (
+                bx, by, bw, rh, fill, stroke, dash))
+            L.append('  <text x="%d" y="%d" class="mono" fill="%s" font-size="13.5" font-weight="700">%s</text>' % (
+                bx + 14, by + 24, INK, esc(r["name"])))
+            if stub:
+                L.append('  <text x="%d" y="%d" text-anchor="end" fill="%s" font-size="9.5">stub</text>' % (
+                    bx + bw - 12, by + 24, SUB))
+            ty = by + 24 + ROLE_LINE
+            for bl in (r["_blurb"] or [""]):
+                L.append('  <text x="%d" y="%d" fill="%s" font-size="11">%s</text>' % (bx + 14, ty, SUB, esc(bl)))
+                ty += ROLE_LINE
+            by += rh + ROLE_GAP
+
+    L.append('</svg>')
+    return '\n'.join(L)
 
 
-def draw_panel(x, items, head, sub1, sub2):
-    ph = panel_height(items)
-    out = []
-    out.append('  <rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="%s" stroke="%s" stroke-width="1.5"/>' % (
-        x, PANEL_TOP, PANEL_W, ph, PANEL_FILL, PANEL_STROKE))
-    out.append('  <text x="%d" y="%d" fill="%s" font-size="18" font-weight="700">%s</text>' % (x + 22, PANEL_TOP + 34, HEAD, esc(head)))
-    out.append('  <text x="%d" y="%d" fill="%s" font-size="12.5">%s</text>' % (x + 22, PANEL_TOP + 54, SUB, esc(sub1)))
-    out.append('  <text x="%d" y="%d" fill="%s" font-size="11.5">%s</text>' % (x + 22, PANEL_TOP + 72, SUB, esc(sub2)))
-    by = PANEL_TOP + PAD_TOP + HEADER_H
-    for name, blurb in items:
-        bh = box_height(blurb)
-        bx, bw = x + 28, PANEL_W - 56
-        out.append('  <rect x="%d" y="%d" width="%d" height="%d" rx="8" fill="%s" stroke="%s" stroke-width="1.5"/>' % (bx, by, bw, bh, BOX_FILL, BOX_STROKE))
-        out.append('  <text x="%d" y="%d" fill="%s" font-size="14.5" font-weight="600">%s</text>' % (bx + 18, by + 30, INK, esc(name)))
-        ty = by + 30 + LINE_H
-        for bl in (blurb or [""]):
-            out.append('  <text x="%d" y="%d" fill="%s" font-size="12">%s</text>' % (bx + 18, ty, SUB, esc(bl)))
-            ty += LINE_H
-        by += bh + BOX_GAP
-    return out, ph
-
-
-L = []
-body_h = max(panel_height(ASSISTANTS), panel_height(BUILDERS), 233)
-H = PANEL_TOP + body_h + 120
-L.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">' % (W, H, W, H))
-L.append('  <style>text { font-family: %s; }</style>' % FONT)
-L.append('  <defs>')
-L.append('    <marker id="a-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="%s"/></marker>' % BLUE)
-L.append('    <marker id="a-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="%s"/></marker>' % GREEN)
-L.append('  </defs>')
-L.append('  <rect width="%d" height="%d" fill="%s"/>' % (W, H, BG))
-
-L.append('  <text x="%d" y="46" text-anchor="middle" fill="%s" font-size="24" font-weight="700">agent_worlds</text>' % (CX, INK))
-L.append('  <text x="%d" y="72" text-anchor="middle" fill="%s" font-size="14">Two worlds of agents that serve me</text>' % (CX, SUB))
-
-lp, _ = draw_panel(LPX, ASSISTANTS, "ASSISTANTS", "work helpers", "Carry the work I already have")
-rp, _ = draw_panel(RPX, BUILDERS, "BUILDERS", "project agents", "Create the things I want to make")
-L += lp
-L += rp
-
-ME_BY = PANEL_TOP + 155
-L += avatar(CX, ME_BY)
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="16" font-weight="700">Me</text>' % (CX, ME_BY + 26, INK))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="11">raw work + ideas</text>' % (CX, ME_BY + 44, SUB))
-
-ay_out, ay_back = ME_BY - 45, ME_BY - 15
-L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-blue)"/>' % (CX - 32, ay_out, LPX + PANEL_W + 4, ay_out - 28, BLUE))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="12">work · inboxes</text>' % ((CX - 32 + LPX + PANEL_W) // 2, ay_out - 26, BLUE))
-L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-green)"/>' % (LPX + PANEL_W + 4, ay_back, CX - 32, ay_back + 4, GREEN))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="12">handled · digests</text>' % ((CX - 32 + LPX + PANEL_W) // 2, ay_back + 24, GREEN))
-L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-blue)"/>' % (CX + 32, ay_out, RPX - 4, ay_out - 28, BLUE))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="12">rough ideas</text>' % ((CX + 32 + RPX) // 2, ay_out - 26, BLUE))
-L.append('  <line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-green)"/>' % (RPX - 4, ay_back, CX + 32, ay_back + 4, GREEN))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="12">results</text>' % ((CX + 32 + RPX) // 2, ay_back + 24, GREEN))
-
-tag_y = PANEL_TOP + body_h + 32
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="15" font-weight="700">Lighten the load</text>' % (LPX + PANEL_W // 2, tag_y, BLUE))
-L.append('  <text x="%d" y="%d" text-anchor="middle" fill="%s" font-size="15" font-weight="700">Build the future</text>' % (RPX + PANEL_W // 2, tag_y, GREEN))
-
-ly = H - 30
-L.append('  <line x1="60" y1="%d" x2="92" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-blue)"/>' % (ly, ly, BLUE))
-L.append('  <text x="100" y="%d" fill="%s" font-size="12">I hand over work &amp; ideas</text>' % (ly + 4, SUB))
-L.append('  <line x1="320" y1="%d" x2="352" y2="%d" stroke="%s" stroke-width="1.8" marker-end="url(#a-green)"/>' % (ly, ly, GREEN))
-L.append('  <text x="360" y="%d" fill="%s" font-size="12">agents return value</text>' % (ly + 4, SUB))
-
-L.append('</svg>')
-
+company = load_company(COMPANY)
+svg = build(company)
 with open(os.path.join(HERE, "concept.svg"), "w") as f:
-    f.write('\n'.join(L))
+    f.write(svg)
 
-print("Discovered agents:")
-for nm, bl in ASSISTANTS:
-    print("  [assistant] %-28s %s" % (nm, " ".join(bl)))
-for nm, bl in BUILDERS:
-    print("  [builder]   %-28s %s" % (nm, " ".join(bl)))
+print("Company:", company["company"])
+for d in company["departments"]:
+    print("  department: %-12s (%d roles)" % (d["name"], len(d["roles"])))
+    for r in d["roles"]:
+        print("    %-12s [%s] %s" % (r["name"], r["status"], r["summary"]))
 print("wrote", os.path.join(HERE, "concept.svg"))

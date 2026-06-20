@@ -3,67 +3,107 @@
 **English** · [中文](README.zh.md)
 
 <p align="center">
-  <img src="diagrams/concept.svg" alt="agent_worlds — two worlds of agents that serve me" width="860">
+  <img src="diagrams/concept.svg" alt="agent_worlds — a one-person company of agents" width="900">
 </p>
 
-A personal collection of AI agents — recurring workflows and creative work,
-distilled into reusable agents I can pick up at any time.
+A **one-person company of agents** — from a raw idea to a released feature.
 
-Every agent falls into one of two worlds:
+Instead of a loose pile of agents, `agent_worlds` is organized like a company:
 
-| | **assistants** | **builders** |
-|---|---|---|
-| **Purpose** | Carry the work I already have | Create the things I want to make |
-| **Faces** | My existing job & daily load | New projects & ideas |
-| **Does** | Handles chores, collects unhandled items | Designs and decomposes projects |
-| **In one line** | *Lighten the load* | *Build the future* |
+```
+company → department → role → agent
+```
 
-- **assistants** — work helpers. They watch my inboxes, collect what needs
-  attention (mentions, DMs, todos), and take routine work off my plate.
-- **builders** — project agents. They turn rough ideas into buildable plans:
-  product specs, game designs, and whatever I decide to make next.
+The structure is declared once in [`company.yaml`](company.yaml). How the company
+turns an idea into a release is **data, not a prompt** — it lives in
+[`workflows/`](workflows/) as declarative steps.
+
+## The idea
+
+Most agent projects are a flat list of agents. The missing piece isn't more
+agents — it's **organization**: who does what, in what order, handing what to whom.
+So this repo models a company:
+
+- **Departments** group roles by function (`product`, `engineering`, `quality`, `support`).
+- **Roles** are the jobs (`pm`, `architect`, `qa`, …). In V1 each role is one agent.
+- **Workflows** wire roles into a pipeline. Roles hand off via **artifact files** —
+  the filesystem is the message bus. No service, no daemon.
+
+> **Process is data.** To change how the company works, edit a workflow YAML —
+> not a hidden prompt.
 
 ## Structure
 
 ```
 agent_worlds/
-├── agents/
-│   ├── assistants/                work helpers
-│   │   └── secretary-agent/        inbox & todo collector
-│   └── builders/                  project agents
-│       ├── pm-agent/               rough idea → spec pack
-│       └── game-agent/             game design & mechanics
-└── diagrams/                      shared diagram assets + generators
+├── company.yaml          the org: departments → roles (single source of truth)
+├── CLAUDE.md             how to work in this repo (rules)
+├── workflows/            how the company runs a job (process as data)
+│   └── software_feature.yaml
+├── departments/
+│   ├── product/          pm · researcher
+│   ├── engineering/      architect · backend · web · game
+│   ├── quality/          qa
+│   └── support/          secretary
+└── diagrams/             generated org chart + pipeline (never hand-edited)
 ```
 
-## Agents
+Each role lives at `departments/<dept>/<role>/` with an `agent.md` (the role) and,
+when fleshed out, its methodology files — kept flat, or grouped in a `playbook/`
+once there are several.
 
-### assistants
+## The default workflow: `software_feature`
 
-| Agent | One line |
-|-------|----------|
-| [secretary-agent](agents/assistants/secretary-agent/) | Watches my inboxes and collects unhandled items so nothing slips. |
+```
+research → requirements → architecture → build (backend/web/game) → test → release
+   pm·researcher    pm★         architect        engineering          qa     pm★
+```
 
-### builders
+★ = owner checkpoint (`gate`). Each step `consumes` the upstream artifacts and
+`produces` the next ones — e.g. `pm` writes `01_mvp_spec.md`, `architect` reads it.
+See [`workflows/software_feature.yaml`](workflows/software_feature.yaml).
 
-| Agent | One line |
-|-------|----------|
-| [pm-agent](agents/builders/pm-agent/) | Turns a rough product idea into a small, buildable spec pack. |
-| [game-agent](agents/builders/game-agent/) | Turns a game idea into a design doc and core mechanics. |
+## Roles
+
+| Department | Role | Status | One line |
+|---|---|---|---|
+| product | [pm](departments/product/pm/agent.md) | active | Turns a rough product idea into a small, buildable spec pack. |
+| product | [researcher](departments/product/researcher/agent.md) | stub | Investigates the problem space before scope is locked. |
+| engineering | [architect](departments/engineering/architect/agent.md) | stub | Turns a locked MVP spec into a system design and ADRs. |
+| engineering | [backend](departments/engineering/backend/agent.md) | stub | Builds server-side logic, APIs, and data. |
+| engineering | [web](departments/engineering/web/agent.md) | stub | Builds the web client. |
+| engineering | [game](departments/engineering/game/agent.md) | stub | Turns a game idea into a design doc and core mechanics. |
+| quality | [qa](departments/quality/qa/agent.md) | stub | Validates deliverables against acceptance criteria. |
+| support | [secretary](departments/support/secretary/agent.md) | stub | Watches my inboxes and collects unhandled items. |
+
+> **Stubs are intentional.** A stub role exists so the workflow runs end-to-end;
+> flesh it out when a real job needs it — not before. `pm` is the reference shape
+> of a complete role.
 
 ## Conventions
 
-These are the ground rules every agent follows — so the collection stays consistent as it grows.
+The ground rules every addition follows (full version in [`CLAUDE.md`](CLAUDE.md)):
 
-1. **Directory name**: short and kebab-case, ending in `-agent` — e.g. `pm-agent`, `game-agent`, `secretary-agent`.
-2. **README first line is the summary**: right under the H1 title, write one sentence describing the agent. Keep it short. That line is the single source of truth — the concept diagram reads it automatically. Anything detailed lives deeper in the README, not in that line.
-3. **Two pieces per agent**: `README.md` (the agent, for both humans and the LLM) and a `<agent-name>-system/` directory (the methodology it operates on, e.g. `pm-system/`, `game-system/`, `secretary-system/` — named after the agent so its owner is obvious).
-4. **Bilingual README**: every agent ships `README.md` (English) and `README.zh.md` (中文), with a language switcher on the first line of each.
-5. **Diagram text is English only**; the diagram is generated, not drawn — run `python3 diagrams/generate_concept.py`. It scans `agents/` and pulls each summary from the English `README.md`. Never edit the diagram by hand.
+1. **Role dir = role name**, kebab-case, no suffix (`pm/`, not `pm-agent/`). The
+   department gives the namespace.
+2. **`agent.md` opens with a role header** (`> **role:** … · **department:** …`)
+   and a one-line summary.
+3. **`company.yaml` is the single source of truth** for the org. The concept
+   diagram reads it — nothing else defines departments/roles.
+4. **Diagrams are generated, never hand-drawn** — run
+   `python3 diagrams/generate_concept.py` after editing `company.yaml`.
+5. **Bilingual lives only here** at the top level; role files are English (for the LLM).
 
-## Adding a New Agent
+## Adding to the company
 
-1. Decide the world: **assistant** (helps with existing work) or **builder** (creates something new).
-2. Create `agents/<world>/<name>-agent/`.
-3. Add `README.md` + `README.zh.md` (short H1 + one-line summary on the first prose line) and a `<name>-system/` directory (the `<name>` without the `-agent` suffix — e.g. `pm-agent` → `pm-system/`). The `/new-agent` skill does all of this for you.
-4. Run `python3 diagrams/generate_concept.py` to refresh the concept diagram, and add a row to the table above.
+- **New role**: create `departments/<dept>/<role>/agent.md`, add it under that
+  department in `company.yaml`, regenerate the diagram.
+- **New department**: add it to `company.yaml`, create the dir, add ≥1 role.
+- **New workflow**: add `workflows/<name>.yaml`, reusing existing roles.
+
+## Where this is going
+
+V1 is deliberately light: files + one workflow, no runtime. The company grows by
+being **used**, not over-architected. A thin orchestrator that *executes* a
+workflow (dispatching each step to its role, gating on owner checkpoints) is the
+natural next step — but only once the structure has earned it.

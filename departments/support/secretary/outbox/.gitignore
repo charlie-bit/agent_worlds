@@ -1,0 +1,4 @@
+# Secretary digests aggregate the owner's private inboxes — local-only, never committed.
+# (This .gitignore keeps the dir present while ignoring everything in it.)
+*
+!.gitignore
