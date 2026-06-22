@@ -132,4 +132,13 @@ reads **real private data**, so its guardrails are explicit.
 
 - `config.md` — source registry schema, capability/adapter mapping, triage rules.
 - `digest_template.md` — the digest format (daily + roll-up).
-- `outbox/` — produced digests; local-only, gitignored.
+- `registry.example.yaml` — copy to `~/.agent_worlds/secretary/registry.yaml` and fill in real IDs.
+- `dashboard.template.html` — static HTML shell (CSS + JS renderer); committed to repo.
+  Design: hero headline ("what needs your attention?") + real-time search bar above a 2-column
+  bento grid of 6 cards (Summary · Waiting on Me · Action Items · Sources · Coverage · Config).
+  Each card has a distinct pastel background, pill label, Instrument Serif headline, and a
+  layered depth effect (staggered `margin-top` + `z-index` + shadow). Hover triggers a 3D tilt
+  (`perspective rotateX/Y ±8°, scale 1.025`). Search highlights matches in yellow and dims
+  non-matching cards; ✕ clears instantly.
+- `generate_dashboard.py` — reads `outbox/*-digest.md` → structured JSON → injects into template → writes `outbox/dashboard.html`. Same pattern as `company.yaml → generate_concept.py → concept.svg`.
+- `outbox/` — produced digests and rendered dashboard; local-only, gitignored.

@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secretary Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f5f3ee;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.4rem 2.4rem;
+      position: sticky;
+      top: 0;
+      background: rgba(245,243,238,.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    .brand {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      color: #1a1a1a;
+    }
+    .brand em { font-style: italic; color: #999; }
+    .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tab {
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      border: 1.5px solid #ccc;
+      background: transparent;
+      color: #888;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.18s;
+    }
+    .tab:hover  { border-color: #1a1a1a; color: #1a1a1a; }
+    .tab.active { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 3.5rem;
+    }
+    .hero-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #1a1a1a;
+      margin-bottom: 2.2rem;
+    }
+    .hero-title em { font-style: italic; color: #aaa; }
+
+    /* ── Search box ── */
+    .search-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: min(520px, 90vw);
+    }
+    .search-icon {
+      position: absolute;
+      left: 1.1rem;
+      color: #aaa;
+      pointer-events: none;
+      font-size: 1rem;
+    }
+    #search {
+      width: 100%;
+      padding: 0.85rem 1rem 0.85rem 2.8rem;
+      border-radius: 999px;
+      border: 1.5px solid #ddd;
+      background: #fff;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      color: #1a1a1a;
+      outline: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #search::placeholder { color: #bbb; }
+    #search:focus {
+      border-color: #1a1a1a;
+      box-shadow: 0 2px 20px rgba(0,0,0,.10);
+    }
+    .search-clear {
+      position: absolute;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 1rem;
+      cursor: pointer;
+      display: none;
+      line-height: 1;
+      padding: 0;
+    }
+    .search-clear:hover { color: #555; }
+    #search-result {
+      margin-top: 0.7rem;
+      font-size: 0.78rem;
+      color: #aaa;
+      min-height: 1.2em;
+    }
+
+    /* ── Bento ── */
+    .bento-wrap {
+      padding: 0 2rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .bento {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      grid-template-areas:
+        "config   config  "
+        "summary  waiting "
+        "actions  sources "
+        "coverage coverage";
+      gap: 1.2rem;
+    }
+    @media (max-width: 820px) {
+      .bento {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "config   config"
+          "summary  summary"
+          "actions  waiting"
+          "sources  sources"
+          "coverage coverage";
+      }
+    }
+    @media (max-width: 540px) {
+      .bento { grid-template-columns: 1fr; grid-template-areas: "config" "summary" "waiting" "actions" "sources" "coverage"; }
+    }
+
+    /* ── Card ── */
+    @keyframes floatA { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-7px)} }
+    @keyframes floatB { 0%,100%{transform:translateY(-4px)} 50%{transform:translateY(4px)}  }
+    @keyframes floatC { 0%,100%{transform:translateY(-2px)} 50%{transform:translateY(6px)}  }
+
+    .card {
+      border-radius: 24px;
+      padding: 1.8rem 2rem;
+      transition: transform 0.18s cubic-bezier(.25,.8,.25,1),
+                  box-shadow 0.18s cubic-bezier(.25,.8,.25,1);
+      will-change: transform;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:not(:hover) { animation: var(--float, floatA) 5s ease-in-out infinite; }
+    .card:hover       { animation: none !important; }
+
+    /* layered depth */
+    .card-config   { grid-area: config;   background: #fff5d0; box-shadow: 0 2px 20px rgba(180,150,0,.10),  0 1px 0 rgba(255,255,255,.8) inset; z-index: 6; --float: floatA; }
+    .card-summary  { grid-area: summary;  background: #fff;    box-shadow: 0 4px 24px rgba(0,0,0,.07),       0 1px 0 rgba(255,255,255,.9) inset; z-index: 5; margin-top: 6px;  --float: floatB; }
+    .card-waiting  { grid-area: waiting;  background: #fde9cf; box-shadow: 0 4px 24px rgba(232,113,10,.14),  0 1px 0 rgba(255,255,255,.6) inset; z-index: 5; margin-top: 6px;  --float: floatC; }
+    .card-actions  { grid-area: actions;  background: #dce8ff; box-shadow: 0 4px 24px rgba(66,133,244,.13),  0 1px 0 rgba(255,255,255,.6) inset; z-index: 4; margin-top: 10px; --float: floatA; }
+    .card-sources  { grid-area: sources;  background: #d5f0de; box-shadow: 0 6px 28px rgba(30,142,62,.11),   0 1px 0 rgba(255,255,255,.5) inset; z-index: 3; margin-top: 14px; --float: floatB; }
+    .card-coverage { grid-area: coverage; background: #ece0ff; box-shadow: 0 8px 32px rgba(147,52,230,.11),  0 1px 0 rgba(255,255,255,.5) inset; z-index: 2; margin-top: 18px; --float: floatC; }
+
+    /* card dim when search has no match */
+    .card.no-match { opacity: .28; transition: opacity .2s; }
+
+    /* ── Pill ── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .24rem .72rem;
+      border-radius: 999px;
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .pill-white  { background: #eeeae2; color: #666; }
+    .pill-blue   { background: #b8d0ff; color: #1a4bb5; }
+    .pill-orange { background: #ffd0a0; color: #a04000; }
+    .pill-green  { background: #a8ddb8; color: #1a5c30; }
+    .pill-purple { background: #d0b0ff; color: #5c1a9e; }
+    .pill-yellow { background: #ffe080; color: #7a5a00; }
+
+    /* ── Card typography ── */
+    .card-headline {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.55rem;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: .4rem;
+    }
+    .card-count {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 3.2rem;
+      line-height: 1;
+      letter-spacing: -.04em;
+      margin-bottom: .2rem;
+    }
+    .card-sub { font-size: .8rem; color: rgba(0,0,0,.4); margin-bottom: 1rem; }
+    .summary-body {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.05rem;
+      font-style: italic;
+      color: #555;
+      line-height: 1.8;
+      margin-top: .5rem;
+    }
+
+    /* ── Scrollable ── */
+    .scroll {
+      max-height: 210px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,.1) transparent;
+    }
+    .scroll::-webkit-scrollbar { width: 3px; }
+    .scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+
+    /* ── Items ── */
+    .item {
+      display: flex;
+      align-items: flex-start;
+      gap: .45rem;
+      padding: .44rem 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      font-size: .83rem;
+      line-height: 1.55;
+      color: #2a2a2a;
+    }
+    .item:last-child { border-bottom: none; }
+    .item.done { color: #aaa; text-decoration: line-through; }
+    .item.hidden { display: none; }
+
+    .dot {
+      flex-shrink: 0;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-top: .44rem;
+    }
+    .d-high { background: #e53935; }
+    .d-med  { background: #f9a825; }
+    .d-low  { background: #43a047; }
+    .d-off  { background: #bbb; }
+    .d-ok   { background: #43a047; }
+    .d-none { background: #f9a825; }
+    .d-skip { background: #ccc; }
+
+    .cb { flex-shrink: 0; width: 13px; height: 13px; margin-top: .12rem; accent-color: #1a1a1a; }
+    .item-text { flex: 1; }
+
+    /* ── Search highlight ── */
+    mark {
+      background: #ffe066;
+      color: inherit;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    /* ── Source blocks ── */
+    .src-name {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #2a6640;
+      margin: .9rem 0 .3rem;
+      padding-bottom: .25rem;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .src-name:first-child { margin-top: 0; }
+    .src-sub {
+      font-size: .69rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #777;
+      margin: .55rem 0 .2rem;
+    }
+
+    /* Coverage */
+    .cov-row {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .38rem 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      font-size: .81rem;
+      color: #444;
+    }
+    .cov-row:last-child { border-bottom: none; }
+    .cov-name { font-weight: 600; min-width: 70px; }
+    .cov-detail { color: #888; font-size: .76rem; }
+
+    /* ── Sticky note button ── */
+    .sticky-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: #fff5d0; border: 1.5px solid #ffe080;
+      font-size: .95rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 2px 2px 6px rgba(0,0,0,.08);
+      flex-shrink: 0;
+    }
+    .sticky-btn:hover { transform: rotate(-4deg) scale(1.1); box-shadow: 3px 3px 10px rgba(0,0,0,.12); }
+
+    /* ── Guide modal ── */
+    #guide-overlay { display: none; }
+    #guide-overlay.open { display: flex !important; }
+    .guide-note {
+      background: #fffde7;
+      border-radius: 16px;
+      padding: 2rem 2.2rem 1.6rem;
+      max-width: 480px; width: 90vw;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+      transform: rotate(-1deg);
+    }
+    .guide-pin {
+      position: absolute; top: -14px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.4rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,.2));
+    }
+    .guide-close {
+      position: absolute; top: .8rem; right: .9rem;
+      background: none; border: none; color: #bbb; font-size: 1rem;
+      cursor: pointer; line-height: 1; padding: 0;
+    }
+    .guide-close:hover { color: #555; }
+    .guide-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.3rem; letter-spacing: -.02em;
+      margin-bottom: 1.2rem; color: #1a1a1a;
+      text-align: center;
+    }
+    .guide-steps {
+      list-style: none; display: flex; flex-direction: column; gap: .85rem;
+    }
+    .guide-steps li {
+      display: flex; gap: .7rem; align-items: flex-start;
+      font-size: .84rem; line-height: 1.55;
+    }
+    .guide-num {
+      flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+      background: #1a1a1a; color: #fff; font-size: .68rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: .1rem;
+    }
+    .guide-steps strong { display: block; font-weight: 600; margin-bottom: .15rem; }
+    .guide-steps p { color: #555; margin: 0; }
+    .guide-steps code { background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; font-size: .78rem; }
+    .guide-steps em { font-style: italic; color: #888; }
+    .guide-footer {
+      margin-top: 1.2rem; padding-top: .8rem;
+      border-top: 1px solid rgba(0,0,0,.08);
+      font-size: .75rem; color: #aaa; text-align: center;
+    }
+
+    /* ── Config card ── */
+    .cfg-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .cfg-toggle-arrow {
+      font-size: .8rem; color: #aaa; transition: transform .2s;
+    }
+    .cfg-body { display: none; margin-top: 1.2rem; }
+    .cfg-body.open { display: block; }
+    .cfg-toggle-arrow.open { transform: rotate(180deg); }
+
+    .cfg-label {
+      font-size: .67rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: #7a5a00; margin-bottom: .35rem; display: block;
+    }
+    .cfg-input {
+      padding: .4rem .7rem; border-radius: 8px;
+      border: 1.5px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.7);
+      font-size: .82rem; font-family: 'Inter', sans-serif; color: #1a1a1a;
+      outline: none; transition: border-color .15s; width: 100%;
+    }
+    .cfg-input:focus { border-color: #c8a000; background: #fff; }
+    .cfg-input::placeholder { color: #bbb; }
+
+    .cfg-row-inline {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .7rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Source accordion */
+    .cfg-source {
+      border: 1.5px solid rgba(0,0,0,.08); border-radius: 12px;
+      overflow: hidden; margin-bottom: .6rem;
+    }
+    .cfg-source:last-child { margin-bottom: 0; }
+    .cfg-source-header {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .6rem .9rem; cursor: pointer;
+      background: rgba(255,255,255,.5); user-select: none;
+    }
+    .cfg-source-header:hover { background: rgba(255,255,255,.8); }
+    .cfg-source-toggle {
+      width: 32px; height: 18px; border-radius: 999px;
+      background: #ddd; position: relative; flex-shrink: 0;
+      transition: background .2s; cursor: pointer;
+    }
+    .cfg-source-toggle.on { background: #1a1a1a; }
+    .cfg-source-toggle::after {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      border-radius: 50%; background: #fff; top: 2px; left: 2px;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .cfg-source-toggle.on::after { transform: translateX(14px); }
+    .cfg-source-name { font-weight: 600; font-size: .85rem; flex: 1; }
+    .cfg-source-arrow { font-size: .75rem; color: #aaa; transition: transform .2s; }
+    .cfg-source-arrow.open { transform: rotate(180deg); }
+    .cfg-source-body { display: none; padding: .8rem .9rem 1rem; border-top: 1px solid rgba(0,0,0,.06); }
+    .cfg-source-body.open { display: block; }
+
+    /* Channel picker */
+    .ch-search {
+      padding: .35rem .7rem; border-radius: 8px;
+      border: 1.5px solid rgba(0,0,0,.1); background: rgba(255,255,255,.8);
+      font-size: .8rem; font-family: 'Inter', sans-serif; outline: none;
+      width: 100%; margin-bottom: .6rem; transition: border-color .15s;
+    }
+    .ch-search:focus { border-color: #c8a000; }
+    .ch-group-label {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: #aaa;
+      margin: .6rem 0 .3rem; padding-bottom: .2rem;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    .ch-list { max-height: 180px; overflow-y: auto; scrollbar-width: thin; }
+    .ch-item {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .32rem .2rem; border-radius: 6px; cursor: pointer;
+      transition: background .1s; font-size: .82rem;
+    }
+    .ch-item:hover { background: rgba(0,0,0,.04); }
+    .ch-item input[type=checkbox] { accent-color: #1a1a1a; width: 14px; height: 14px; flex-shrink: 0; }
+    .ch-item-name { flex: 1; }
+    .ch-item-id { font-size: .72rem; color: #bbb; font-family: monospace; }
+
+    /* Save */
+    .cfg-owner-chip {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .4rem .7rem; border-radius: 8px;
+      background: rgba(255,255,255,.7); border: 1.5px solid rgba(0,0,0,.1);
+      height: 36px;
+    }
+    .cfg-owner-avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #1a1a1a; color: #fff;
+      font-size: .7rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cfg-save-row { display: flex; align-items: center; gap: .8rem; margin-top: 1rem; }
+    .cfg-save {
+      padding: .5rem 1.4rem; border-radius: 999px; border: none;
+      background: #1a1a1a; color: #fff; font-size: .82rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: background .15s, transform .1s; flex-shrink: 0;
+    }
+    .cfg-save:hover { background: #333; }
+    .cfg-save:active { transform: scale(.97); }
+    .cfg-status { font-size: .75rem; color: #43a047; }
+
+    .badge { font-size: .67rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .badge-on  { background: #c6f0cc; color: #1a5c30; }
+    .badge-off { background: #e8e4dc; color: #999; }
+
+    .empty-note { font-size: .8rem; color: rgba(0,0,0,.3); font-style: italic; padding: .3rem 0; }
+
+    a { color: inherit; text-underline-offset: 2px; }
+
+    /* Digest panel */
+    .digest-panel { display: none; }
+    .digest-panel.active { display: block; }
+
+    /* empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.5rem;
+      color: #bbb;
+      font-style: italic;
+    }
+    .empty-state small {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-size: .82rem;
+      margin-top: .6rem;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="brand">Secretary <em>digest</em></div>
+  <div id="nav-owner" style="display:flex;align-items:center;gap:.8rem;font-size:.82rem;color:#888"></div>
+  <div style="display:flex;align-items:center;gap:.8rem">
+    <div class="tabs" id="tabs"></div>
+    <button class="sticky-btn" onclick="openGuide()" title="Getting started">📝</button>
+  </div>
+</nav>
+
+<!-- Guide modal -->
+<div id="guide-overlay" onclick="closeGuide()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);z-index:999;align-items:center;justify-content:center">
+  <div class="guide-note" onclick="event.stopPropagation()">
+    <div class="guide-pin">📌</div>
+    <button class="guide-close" onclick="closeGuide()">✕</button>
+    <h3 class="guide-title">Getting Started</h3>
+    <ol class="guide-steps">
+      <li>
+        <span class="guide-num">1</span>
+        <div>
+          <strong>Choose your model</strong>
+          <p>Open <em>Config</em> → select Model / Host (default: Claude Code). This tells the secretary which adapter to use when collecting data.</p>
+        </div>
+      </li>
+      <li>
+        <span class="guide-num">2</span>
+        <div>
+          <strong>Enable sources</strong>
+          <p>Toggle on the sources you want (Slack is first). For Slack, pick which channels to monitor from the list.</p>
+        </div>
+      </li>
+      <li>
+        <span class="guide-num">3</span>
+        <div>
+          <strong>Save config</strong>
+          <p>Click <em>↓ Download registry.yaml</em> and move the file to <code>~/.agent_worlds/secretary/registry.yaml</code>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="guide-num">4</span>
+        <div>
+          <strong>Run the secretary</strong>
+          <p>Ask Claude: <em>"Run the daily digest for today."</em> It will collect, triage, and write <code>outbox/YYYY-MM-DD-digest.md</code>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="guide-num">5</span>
+        <div>
+          <strong>Refresh dashboard</strong>
+          <p>Run <code>python3 generate_dashboard.py</code> to render the new digest into this dashboard.</p>
+        </div>
+      </li>
+    </ol>
+    <div class="guide-footer">Changes to Config auto-download — no manual save needed.</div>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">what needs <em>your attention?</em></div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input id="search" type="text" placeholder="Search across all cards…" autocomplete="off">
+    <button class="search-clear" id="search-clear" title="Clear">✕</button>
+  </div>
+  <div id="search-result"></div>
+</div>
+
+<!-- Bento -->
+<div class="bento-wrap">
+  <div id="root"></div>
+</div>
+
+<script id="digest-data" type="application/json">
+__DIGEST_DATA__
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('digest-data').textContent);
+
+/* ── Escape + inline markdown ── */
+function e(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\[ACTION:([^\]]+)\]/g,'<u style="font-weight:600">ACTION:$1</u>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+}
+
+function dotCls(p) {
+  return p==='HIGH'?'d-high':p==='MED'?'d-med':p==='LOW'?'d-low':'d-off';
+}
+
+/* ── Renderers ── */
+function renderActions(items) {
+  if (!items||!items.length) return '<div class="empty-note">— none —</div>';
+  return items.map(it=>`
+    <div class="item ${it.done?'done':''}" data-text="${(it.text||'').replace(/"/g,'&quot;')}">
+      <input class="cb" type="checkbox"${it.done?' checked':''} disabled>
+      <span class="item-text">${e(it.text)}</span>
+    </div>`).join('');
+}
+
+function renderTopics(items) {
+  if (!items||!items.length) return '<div class="empty-note">— none —</div>';
+  return items.map(it=>`
+    <div class="item" data-text="${(it.text||'').replace(/"/g,'&quot;')}">
+      <span class="dot ${dotCls(it.priority)}"></span>
+      <span class="item-text">${e(it.text)}</span>
+    </div>`).join('');
+}
+
+function renderSources(sources) {
+  if (!sources||!sources.length) return '<div class="empty-note">— no sources —</div>';
+  return sources.map(src=>{
+    const inner = src.groups
+      ? src.groups.map(g=>`<div class="src-sub">${e(g.name)}</div>${renderTopics(g.items)}`).join('')
+      : renderTopics(src.items);
+    return `<div class="src-name">${e(src.name)}</div>${inner}`;
+  }).join('');
+}
+
+function renderCoverage(items) {
+  if (!items||!items.length) return '<div class="empty-note">— no data —</div>';
+  return items.map(it=>{
+    const t = it.text||'';
+    const cls = /did not run|disabled/i.test(t)?'d-skip':/no results/i.test(t)?'d-none':'d-ok';
+    const m = t.match(/^([^:]+):\s*(.*)$/);
+    return `<div class="cov-row" data-text="${t.replace(/"/g,'&quot;')}">
+      <span class="dot ${cls}" style="margin-top:0;flex-shrink:0"></span>
+      ${m?`<span class="cov-name">${e(m[1])}</span><span class="cov-detail">${e(m[2])}</span>`
+         :`<span>${e(t)}</span>`}
+    </div>`;
+  }).join('');
+}
+
+function renderConfig(sources) {
+  const all = ['slack','jira','github','calendar','gmail','feishu'];
+  const on  = (sources||[]).map(s=>s.name.toLowerCase());
+  return all.map(name=>`
+    <div class="cfg-row">
+      <span style="font-weight:500;text-transform:capitalize">${name}</span>
+      <span class="badge ${on.includes(name)?'badge-on':'badge-off'}">${on.includes(name)?'enabled':'off'}</span>
+    </div>`).join('');
+}
+
+/* ── Build panel ── */
+function buildPanel(d) {
+  const ac = (d.action_items||[]).filter(x=>!x.done).length;
+  const wc = (d.waiting_on_me||[]).length;
+  return `
+  <div class="digest-panel" data-date="${d.date}">
+    <div class="bento">
+
+      <div class="card card-summary tilt">
+        <div class="pill pill-white">📋 DIGEST</div>
+        <div class="card-headline">${d.date}</div>
+        <div class="summary-body" data-text="${(d.summary||'').replace(/"/g,'&quot;')}">${e(d.summary)||'No summary available.'}</div>
+      </div>
+
+      <div class="card card-waiting tilt">
+        <div class="pill pill-orange">🔔 WAITING ON ME</div>
+        <div class="card-count">${wc}</div>
+        <div class="card-sub">mention${wc!==1?'s':''} &amp; DM${wc!==1?'s':''}</div>
+        <div class="scroll">${renderTopics(d.waiting_on_me)}</div>
+      </div>
+
+      <div class="card card-actions tilt">
+        <div class="pill pill-blue">✅ ACTION ITEMS</div>
+        <div class="card-count">${ac}</div>
+        <div class="card-sub">pending action${ac!==1?'s':''}</div>
+        <div class="scroll">${renderActions(d.action_items)}</div>
+      </div>
+
+      <div class="card card-sources tilt">
+        <div class="pill pill-green">📡 SOURCES</div>
+        <div class="card-headline">Inbox breakdown</div>
+        <div class="scroll" style="max-height:240px">${renderSources(d.sources)}</div>
+      </div>
+
+      <div class="card card-coverage tilt">
+        <div class="pill pill-purple">📊 COVERAGE</div>
+        <div class="card-headline">What ran</div>
+        <div class="scroll">${renderCoverage(d.coverage)}</div>
+      </div>
+
+      <div class="card card-config tilt" id="cfg-card">
+        <!-- header: always visible -->
+        <div class="cfg-toggle" onclick="toggleConfig()">
+          <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
+            <div class="pill pill-yellow" style="margin-bottom:0">⚙️ CONFIG</div>
+            <span id="cfg-summary" style="font-size:.82rem;color:#888"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.8rem">
+            <span id="cfg-sync-time" style="font-size:.75rem;color:#bbb"></span>
+            <span class="cfg-toggle-arrow" id="cfg-arrow">▼</span>
+          </div>
+        </div>
+
+        <!-- body: collapsed by default -->
+        <div class="cfg-body" id="cfg-body">
+          <!-- Model select -->
+          <div style="margin-bottom:1rem">
+            <label class="cfg-label">Model / Host</label>
+            <select class="cfg-input" id="cfg-model" style="max-width:260px" onchange="onModelChange()">
+              <option value="claude-code">Claude Code</option>
+              <option value="codex">Codex (CLI)</option>
+              <option value="claude-api">Claude API</option>
+              <option value="openai-api">OpenAI API</option>
+            </select>
+          </div>
+
+          <!-- Sources -->
+          <div id="cfg-sources-list"></div>
+
+          <!-- Export -->
+          <div class="cfg-save-row">
+            <button class="cfg-save" id="cfg-save-btn">Export registry.yaml</button>
+            <span class="cfg-status" id="cfg-status"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+/* ── Data from generate_dashboard.py ── */
+const REG = (()=>{ try { const el=document.getElementById('registry-data'); return el?JSON.parse(el.textContent):{};} catch(e){return {};} })();
+const ALL_CHANNELS = (()=>{ try { const el=document.getElementById('channels-data'); return el?JSON.parse(el.textContent):[];} catch(e){return [];} })();
+
+const SOURCES = [
+  { id: 'slack',    label: 'Slack',    color: '#4A154B' },
+  { id: 'jira',     label: 'Jira',     color: '#0052CC' },
+  { id: 'github',   label: 'GitHub',   color: '#1a1a1a' },
+  { id: 'calendar', label: 'Calendar', color: '#1967D2' },
+  { id: 'gmail',    label: 'Gmail',    color: '#D93025' },
+  { id: 'feishu',   label: 'Feishu',   color: '#1456F0' },
+];
+
+/* ── Config toggle ── */
+function toggleConfig() {
+  const body  = document.getElementById('cfg-body');
+  const arrow = document.getElementById('cfg-arrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+/* ── Build Config UI ── */
+function buildConfigUI() {
+  // fill owner fields
+  // Model select — set from registry
+  const modelSel = document.getElementById('cfg-model');
+  if (modelSel) modelSel.value = REG.model || 'claude-code';
+
+  // Nav owner info
+  const owner = REG.owner || {};
+  const name  = owner.name || owner.slack_user_id || '?';
+  const tz    = owner.timezone || '';
+  const model = REG.model || 'claude-code';
+  const modelLabel = { 'claude-code': 'Claude Code', 'codex': 'Codex', 'claude-api': 'Claude API', 'openai-api': 'OpenAI API' }[model] || model;
+  document.getElementById('nav-owner').innerHTML = `
+    <span id="nav-model-chip" style="background:#eeeae2;padding:2px 10px;border-radius:999px;font-size:.75rem;font-weight:600;color:#555">${modelLabel}</span>`;
+
+  const enabledSources = new Set(REG.sources_enabled || []);
+  const enabledChannels = new Set((REG.channels||[]).map(c=>c.channel_id));
+
+  const wrap = document.getElementById('cfg-sources-list');
+  wrap.innerHTML = SOURCES.map(src => {
+    const isOn = enabledSources.has(src.id);
+    const channelPicker = src.id === 'slack' ? buildChannelPicker(enabledChannels) : '';
+    return `
+    <div class="cfg-source" id="src-${src.id}">
+      <div class="cfg-source-header" onclick="toggleSource('${src.id}')">
+        <div class="cfg-source-toggle ${isOn?'on':''}" id="toggle-${src.id}"
+             onclick="event.stopPropagation();flipSource('${src.id}')"></div>
+        <span class="cfg-source-name">${src.label}</span>
+        ${src.id==='slack' ? '<span class="cfg-source-arrow" id="arrow-'+src.id+'">▼</span>' : ''}
+      </div>
+      ${src.id==='slack' ? `<div class="cfg-source-body" id="body-${src.id}">${channelPicker}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  updateCfgSummary();
+
+  // restore last sync time from localStorage
+  const lastSync = localStorage.getItem('cfg-last-sync');
+  if (lastSync) {
+    const d  = new Date(lastSync);
+    const ts = d.toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const el = document.getElementById('cfg-sync-time');
+    if (el) el.textContent = 'Last sync ' + ts;
+  }
+}
+
+function buildChannelPicker(enabledChannels) {
+  if (!ALL_CHANNELS.length) return '<div style="font-size:.8rem;color:#aaa;padding:.4rem 0">No channel cache — run secretary to refresh.</div>';
+
+  // group by .group
+  const groups = {};
+  ALL_CHANNELS.forEach(ch => {
+    const g = ch.group || 'other';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(ch);
+  });
+
+  const groupHtml = Object.entries(groups).map(([g, chs]) => {
+    const items = chs.map(ch => {
+      const checked = enabledChannels.has(ch.id) ? 'checked' : '';
+      return `<label class="ch-item">
+        <input type="checkbox" data-ch-id="${ch.id}" data-ch-name="${ch.name}" data-ch-group="${g}" ${checked}
+               onchange="updateCfgSummary();scheduleAutoSave()">
+        <span class="ch-item-name">#${ch.name}</span>
+        <span class="ch-item-id">${ch.id}</span>
+      </label>`;
+    }).join('');
+    return `<div class="ch-group-label">${g}</div>${items}`;
+  }).join('');
+
+  return `
+    <input class="ch-search" placeholder="Filter channels…" oninput="filterChannels(this.value)">
+    <div class="ch-list" id="ch-list">${groupHtml}</div>`;
+}
+
+function filterChannels(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.ch-item').forEach(item => {
+    const name = item.querySelector('.ch-item-name').textContent.toLowerCase();
+    item.style.display = name.includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.ch-group-label').forEach(label => {
+    const next = label.nextElementSibling;
+    const visible = next && [...next.parentElement.querySelectorAll('.ch-item')]
+      .filter(i=>i.previousElementSibling===label||true)
+      .some(i=>i.style.display!=='none');
+    label.style.display = '';
+  });
+}
+
+function flipSource(id) {
+  const tog = document.getElementById('toggle-'+id);
+  tog.classList.toggle('on');
+  updateCfgSummary();
+  scheduleAutoSave();
+}
+
+function toggleSource(id) {
+  const body  = document.getElementById('body-'+id);
+  const arrow = document.getElementById('arrow-'+id);
+  if (!body) return;
+  body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+function updateCfgSummary() {
+  const on = SOURCES.filter(s=>document.getElementById('toggle-'+s.id)?.classList.contains('on'));
+  const chCount = document.querySelectorAll('#ch-list input[type=checkbox]:checked').length;
+  const parts = on.map(s=>s.label);
+  const summary = parts.length
+    ? parts.join(', ') + (chCount ? ` · ${chCount} channels` : '')
+    : 'not configured';
+  document.getElementById('cfg-summary').textContent = summary;
+}
+
+/* ── Collect + YAML ── */
+function collectConfig() {
+  const uid   = REG.owner?.slack_user_id || '';
+  const tz    = REG.owner?.timezone || '';
+  const model = REG.model || 'claude-code';
+  const enabledSources = SOURCES.filter(s=>document.getElementById('toggle-'+s.id)?.classList.contains('on')).map(s=>s.id);
+  const channels = [];
+  document.querySelectorAll('#ch-list input[type=checkbox]:checked').forEach(cb=>{
+    channels.push({ name: cb.dataset.chName, channel_id: cb.dataset.chId, group: cb.dataset.chGroup });
+  });
+  return { uid, tz, model, enabledSources, channels };
+}
+
+function buildYaml(c) {
+  const srcBlocks = SOURCES.map(s => {
+    const on = c.enabledSources.includes(s.id);
+    if (s.id === 'slack' && on) {
+      const chs = c.channels.map(ch=>
+        `      - { name: ${ch.name}, channel_id: ${ch.channel_id}, group: ${ch.group} }`).join('\n');
+      return `  slack:\n    enabled: true\n    tracked_people: []\n    monitored_channels:\n${chs||'      []'}`;
+    }
+    return `  ${s.id}:\n    enabled: ${on}`;
+  }).join('\n\n');
+  return `# Secretary registry — edit via dashboard or directly\nowner:\n  slack_user_id: "${c.uid}"\n  timezone: "${c.tz}"\n${c.model?`  model: "${c.model}"\n`:''}\nsources:\n${srcBlocks}\n\nprojects: []\naliases: {}\n`;
+}
+
+let autoSaveTimer = null;
+
+/* Auto-cache to localStorage on every change */
+function cacheConfig() {
+  const yaml = buildYaml(collectConfig());
+  localStorage.setItem('cfg-cache', yaml);
+  const now = new Date();
+  const ts  = now.toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+  localStorage.setItem('cfg-last-sync', now.toISOString());
+  const syncEl = document.getElementById('cfg-sync-time');
+  if (syncEl) syncEl.textContent = 'Cached ' + ts;
+  const status = document.getElementById('cfg-status');
+  status.style.color = '#43a047';
+  status.textContent = '✓';
+  setTimeout(()=>{ status.textContent = ''; }, 1500);
+}
+
+/* Export = download cached YAML */
+function exportConfig() {
+  const yaml = localStorage.getItem('cfg-cache') || buildYaml(collectConfig());
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([yaml], {type:'text/yaml'})),
+    download: 'registry.yaml'
+  });
+  a.click();
+  const status = document.getElementById('cfg-status');
+  status.style.color = '#f9a825';
+  status.textContent = '↓ then run: sh apply_config.sh';
+  setTimeout(()=>{ status.textContent = ''; }, 8000);
+}
+
+function openGuide() {
+  document.getElementById('guide-overlay').classList.add('open');
+}
+function closeGuide() {
+  document.getElementById('guide-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeGuide(); });
+
+function onModelChange() {
+  const sel   = document.getElementById('cfg-model');
+  const labels = { 'claude-code': 'Claude Code', 'codex': 'Codex', 'claude-api': 'Claude API', 'openai-api': 'OpenAI API' };
+  const chip  = document.getElementById('nav-model-chip');
+  if (chip) chip.textContent = labels[sel.value] || sel.value;
+  scheduleAutoSave();
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(cacheConfig, 600);
+}
+
+/* ── Tilt ── */
+function initTilt(el) {
+  el.addEventListener('mousemove', ev => {
+    const r = el.getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width  - 0.5;
+    const y = (ev.clientY - r.top)  / r.height - 0.5;
+    const DEG = 9;
+    el.style.transform = `perspective(900px) rotateY(${x*DEG}deg) rotateX(${-y*DEG}deg) scale(1.025)`;
+    el.style.boxShadow = `${-x*24}px ${y*24}px 48px rgba(0,0,0,0.13)`;
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+    el.style.boxShadow = '';
+  });
+}
+
+/* ── Search ── */
+function highlight(el, q) {
+  // restore original
+  const orig = el.dataset.origHtml;
+  if (orig !== undefined) el.innerHTML = orig;
+  else el.dataset.origHtml = el.innerHTML;
+
+  if (!q) return;
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  el.innerHTML = el.innerHTML.replace(re, '<mark>$1</mark>');
+}
+
+let searchTimer;
+function doSearch(q) {
+  q = q.trim();
+  const panel = document.querySelector('.digest-panel.active');
+  if (!panel) return;
+
+  const resultEl = document.getElementById('search-result');
+  document.getElementById('search-clear').style.display = q ? 'block' : 'none';
+
+  if (!q) {
+    // restore all
+    panel.querySelectorAll('.item, .cov-row, .summary-body').forEach(el => {
+      el.classList.remove('hidden');
+      const orig = el.dataset.origHtml;
+      if (orig !== undefined) { el.innerHTML = orig; delete el.dataset.origHtml; }
+    });
+    panel.querySelectorAll('.card').forEach(c => c.classList.remove('no-match'));
+    resultEl.textContent = '';
+    return;
+  }
+
+  let totalMatches = 0;
+
+  panel.querySelectorAll('.card').forEach(card => {
+    const rows = card.querySelectorAll('.item, .cov-row, .summary-body');
+    let cardMatches = 0;
+
+    rows.forEach(el => {
+      const text = (el.dataset.text || el.textContent || '').toLowerCase();
+      const match = text.includes(q.toLowerCase());
+      el.classList.toggle('hidden', !match);
+      if (match) {
+        highlight(el.querySelector('.item-text, .cov-detail, .cov-name') || el, q);
+        cardMatches++;
+      } else {
+        const orig = el.dataset.origHtml;
+        if (orig !== undefined) { el.innerHTML = orig; delete el.dataset.origHtml; }
+      }
+    });
+
+    // summary-body special case (not .item)
+    const sb = card.querySelector('.summary-body');
+    if (sb && !rows.length) {
+      const match = (sb.dataset.text||'').toLowerCase().includes(q.toLowerCase());
+      card.classList.toggle('no-match', !match);
+      if (match) { highlight(sb, q); cardMatches++; }
+    } else {
+      card.classList.toggle('no-match', cardMatches === 0);
+    }
+
+    totalMatches += cardMatches;
+  });
+
+  resultEl.textContent = totalMatches
+    ? `${totalMatches} result${totalMatches!==1?'s':''} found`
+    : 'No results found';
+}
+
+/* ── Tab switch ── */
+function switchDate(date, btn) {
+  document.querySelectorAll('.digest-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.digest-panel[data-date="${date}"]`).classList.add('active');
+  btn.classList.add('active');
+  // re-run search on new panel
+  doSearch(document.getElementById('search').value);
+}
+
+/* ── Init ── */
+function init() {
+  const root = document.getElementById('root');
+  const tabs = document.getElementById('tabs');
+
+  if (!DATA||!DATA.length) {
+    root.innerHTML = `<div class="empty-state">nothing here yet
+      <small>Run <code>python3 generate_dashboard.py</code> after generating a digest.</small></div>`;
+    return;
+  }
+
+  DATA.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab'+(i===0?' active':'');
+    btn.textContent = d.date;
+    btn.onclick = () => switchDate(d.date, btn);
+    tabs.appendChild(btn);
+    root.insertAdjacentHTML('beforeend', buildPanel(d));
+  });
+
+  root.querySelector('.digest-panel').classList.add('active');
+  document.querySelectorAll('.tilt').forEach(initTilt);
+  buildConfigUI();
+  document.getElementById('cfg-save-btn').addEventListener('click', exportConfig);
+
+  // search wiring
+  const input = document.getElementById('search');
+  input.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => doSearch(input.value), 160);
+  });
+  document.getElementById('search-clear').addEventListener('click', () => {
+    input.value = '';
+    doSearch('');
+    input.focus();
+  });
+}
+
+init();
+</script>
+</body>
+</html>

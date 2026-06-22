@@ -1,0 +1,41 @@
+# Secretary — Source Registry Example
+#
+# Copy this file to ~/.agent_worlds/secretary/registry.yaml
+# then fill in your real IDs. Nothing in this file is read at runtime —
+# it is a schema reference only.
+
+owner:
+  slack_user_id: ""        # your Slack user ID, e.g. U012AB3CD
+  timezone: ""             # IANA tz, e.g. Asia/Hong_Kong
+
+sources:
+  slack:
+    enabled: false
+    tracked_people:
+      - { name: "", user_id: "", group: "", dm_channel: "" }
+    monitored_channels:
+      - { name: "", channel_id: "", group: "" }
+
+  jira:
+    enabled: false
+    project_keys: []       # e.g. [PROJ, OPS]
+
+  github:
+    enabled: false
+    repos: []              # e.g. [acme/widget-api]
+
+  calendar:
+    enabled: false         # adapter: local CLI / Calendar API
+
+  gmail:
+    enabled: false         # adapter: Gmail API
+
+  feishu:
+    enabled: false         # adapter: 飞书 open-platform API
+
+# Topic tagging: map keywords/channels/people to a project tag so the
+# digest groups cross-channel chatter under one heading.
+projects:
+  - { id: "", keywords: [], channels: [], people: [] }
+
+aliases: {}                # e.g. widget-api: widget
